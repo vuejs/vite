@@ -114,6 +114,9 @@
 <h2>?raw import</h2>
 <code class="raw"></code>
 
+<h2>?raw css import</h2>
+<code class="raw-css-import"></code>
+
 <h2>?url import</h2>
 <code class="url"></code>
 
@@ -139,6 +142,9 @@
 
   import rawSvg from './nested/fragment.svg?raw'
   text('.raw', rawSvg)
+
+  import rawCss from './nested/raw-import.css?raw'
+  text('.raw-css-import', rawCss)
 
   import fooUrl from './foo.js?url'
   text('.url', fooUrl)

@@ -167,6 +167,9 @@ describe('svg fragments', () => {
 
 test('?raw import', async () => {
   expect(await page.textContent('.raw')).toMatch('SVG')
+
+  expect(await getColor('.raw-css-import')).not.toBe('red')
+  expect(await page.textContent('.raw-css-import')).toMatch('raw-css-import')
 })
 
 test('?url import', async () => {

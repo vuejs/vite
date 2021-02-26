@@ -16,7 +16,7 @@ export const assetUrlRE = /__VITE_ASSET__([a-z\d]{8})__(?:\$_(.*?)__)?/g
 // a different regex
 const assetUrlQuotedRE = /"__VITE_ASSET__([a-z\d]{8})__(?:\$_(.*?)__)?"/g
 
-const rawRE = /(\?|&)raw(?:&|$)/
+export const rawRE = /(\?|&)raw(?:&|$)/
 const urlRE = /(\?|&)url(?:&|$)/
 
 export const chunkToEmittedAssetsMap = new WeakMap<RenderedChunk, Set<string>>()

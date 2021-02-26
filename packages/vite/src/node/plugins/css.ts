@@ -30,7 +30,8 @@ import {
   assetUrlRE,
   registerAssetToChunk,
   fileToUrl,
-  checkPublicFile
+  checkPublicFile,
+  rawRE
 } from './asset'
 import MagicString from 'magic-string'
 import * as Postcss from 'postcss'
@@ -119,7 +120,7 @@ export function cssPlugin(config: ResolvedConfig): Plugin {
     },
 
     async transform(raw, id) {
-      if (!cssLangRE.test(id)) {
+      if (!cssLangRE.test(id) || rawRE.test(id)) {
         return
       }
 
@@ -216,7 +217,7 @@ export function cssPostPlugin(config: ResolvedConfig): Plugin {
     name: 'vite:css-post',
 
     transform(css, id, ssr) {
-      if (!cssLangRE.test(id)) {
+      if (!cssLangRE.test(id) || rawRE.test(id)) {
         return
       }
 
