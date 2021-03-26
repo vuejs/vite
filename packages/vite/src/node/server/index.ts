@@ -51,6 +51,7 @@ import { ssrLoadModule } from '../ssr/ssrModuleLoader'
 import { resolveSSRExternal } from '../ssr/ssrExternal'
 import { ssrRewriteStacktrace } from '../ssr/ssrStacktrace'
 import { createMissingImporterRegisterFn } from '../optimizer/registerMissing'
+import portfinder from 'portfinder'
 
 export interface ServerOptions {
   host?: string
@@ -529,34 +530,31 @@ async function startServer(
   }
 
   const options = server.config.server || {}
-  let port = inlinePort || options.port || 3000
   let hostname = options.host || 'localhost'
   if (hostname === '0.0.0.0') hostname = 'localhost'
   const protocol = options.https ? 'https' : 'http'
   const info = server.config.logger.info
   const base = server.config.base
 
-  return new Promise((resolve, reject) => {
-    const onError = (e: Error & { code?: string }) => {
-      if (e.code === 'EADDRINUSE') {
-        if (options.strictPort) {
-          httpServer.removeListener('error', onError)
-          reject(new Error(`Port ${port} is already in use`))
+  return new Promise(async (resolve, reject) => {
+    const basePort = inlinePort || options.port || 3000
+    const stopPort = options.strictPort ? basePort : undefined
+    const port = await portfinder
+      .getPortPromise({ port: basePort, stopPort, host: hostname })
+      .catch((e) => {
+        if (
+          e.code == 'EADDRINUSE' ||
+          e.code == 'EACCES' ||
+          options.strictPort
+        ) {
+          reject(new Error(`Port ${basePort} is already in use`))
         } else {
-          info(`Port ${port} is in use, trying another one...`)
-          httpServer.listen(++port)
+          reject(e)
         }
-      } else {
-        httpServer.removeListener('error', onError)
-        reject(e)
-      }
-    }
-
-    httpServer.on('error', onError)
+      })
+    if (!port) return
 
     httpServer.listen(port, options.host, () => {
-      httpServer.removeListener('error', onError)
-
       info(
         chalk.cyan(`\n  vite v${require('vite/package.json').version}`) +
           chalk.green(` dev server running at:\n`),
