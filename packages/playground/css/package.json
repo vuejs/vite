@@ -9,9 +9,11 @@
     "serve": "vite preview"
   },
   "devDependencies": {
+    "css-dep": "link:./css-dep",
     "less": "^4.1.0",
     "postcss-nested": "^5.0.3",
+    "postcss-simple-vars": "^6.0.3",
     "sass": "^1.32.5",
-    "css-dep": "link:./css-dep"
+    "sugarss": "^3.0.3"
   }
 }

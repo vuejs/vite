@@ -46,18 +46,6 @@ declare module 'merge-source-map' {
   export default function merge(oldMap: object, newMap: object): object
 }
 
-declare module 'postcss-load-config' {
-  import { ProcessOptions, Plugin } from 'postcss'
-  function load(
-    inline: any,
-    root: string
-  ): Promise<{
-    options: ProcessOptions
-    plugins: Plugin[]
-  }>
-  export = load
-}
-
 declare module 'postcss-import' {
   import { Plugin } from 'postcss'
   const plugin: (options: {

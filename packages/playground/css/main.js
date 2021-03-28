@@ -17,6 +17,9 @@ text('.modules-sass-code', JSON.stringify(sassMod, null, 2))
 
 import './dep.css'
 
+import sss from './sugarss.sss'
+text('.imported-sugarss', sss)
+
 function text(el, text) {
   document.querySelector(el).textContent = text
 }
