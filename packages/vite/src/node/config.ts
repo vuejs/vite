@@ -90,6 +90,11 @@ export interface UserConfig {
    */
   define?: Record<string, any>
   /**
+   * `define` only works for script files by default
+   * set `defineHtml` to true to make it also works for html files
+   */
+  defineHtml?: boolean
+  /**
    * Array of vite plugins to use.
    */
   plugins?: (PluginOption | PluginOption[])[]

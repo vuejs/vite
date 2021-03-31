@@ -124,6 +124,14 @@ export default async ({ command, mode }) => {
 
   - Replacements are performed only when the match is surrounded by word boundaries (`\b`).
 
+### defineHtml
+
+- **Type:** `boolean`
+
+  Above `define` replacements only works for scripts files by default. Setting `defineHtml` to `true` to make it also works for html files.
+
+  If you need more complicated replacements, please write your own plugin with [transformIndexHtml](/guide/api-plugin.html#transformindexhtml) hook instead.
+
 ### plugins
 
 - **Type:** ` (Plugin | Plugin[])[]`

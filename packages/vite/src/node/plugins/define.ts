@@ -93,6 +93,12 @@ export function definePlugin(config: ResolvedConfig): Plugin {
         result.map = s.generateMap({ hires: true })
       }
       return result
+    },
+    transformIndexHtml(html: string) {
+      if (config.defineHtml !== true) return html
+      return html.replace(pattern, (_, match) => {
+        return '' + replacements[match]
+      })
     }
   }
 }
