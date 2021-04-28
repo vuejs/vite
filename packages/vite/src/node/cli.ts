@@ -1,10 +1,11 @@
 import { cac } from 'cac'
 import chalk from 'chalk'
 import { BuildOptions } from './build'
-import { ServerOptions } from './server'
+import { ServerOptions, ViteDevServer } from './server'
 import { createLogger, LogLevel } from './logger'
 import { resolveConfig } from '.'
 import { preview } from './preview'
+import { restartServer } from './server/hmr'
 
 const cli = cac('vite')
 
@@ -50,6 +51,19 @@ function cleanOptions(options: GlobalCLIOptions) {
   return ret
 }
 
+function listenRestart(server: ViteDevServer) {
+  process.stdin.resume()
+  process.stdin.setEncoding('utf8')
+  process.stdin.on('data', async (data) => {
+    const str = data.toString().trim().toLowerCase()
+    // if the keys entered match the restartable value, then restart!
+    // we can make the restart word configurable if necessary
+    if (str === 'rs') {
+      await restartServer(server)
+    }
+  })
+}
+
 cli
   .option('-c, --config <file>', `[string] use specified config file`)
   .option('-r, --root <path>', `[string] use specified root directory`)
@@ -89,6 +103,7 @@ cli
         server: cleanOptions(options) as ServerOptions
       })
       await server.listen()
+      listenRestart(server)
     } catch (e) {
       createLogger(options.logLevel).error(
         chalk.red(`error when starting dev server:\n${e.stack}`)
