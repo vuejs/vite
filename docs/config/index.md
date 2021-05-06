@@ -430,6 +430,15 @@ export default async ({ command, mode }) => {
 
   File system watcher options to pass on to [chokidar](https://github.com/paulmillr/chokidar#api).
 
+### server.disableDotRule
+
+- **Type:** `boolean`
+- **Default:** `false`
+
+  Allow .(DOT) character in the request path.
+
+  Set to `true` to allow requests to carry .(DOT) character.
+
 ## Build Options
 
 ### build.target

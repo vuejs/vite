@@ -120,6 +120,14 @@ export interface ServerOptions {
    * Should start and end with the `/` character
    */
   base?: string
+
+  /**
+   * uses https://github.com/bripkens/connect-history-api-fallback#disabledotrule
+   * Note: Allow  .(DOT) character in the request path.
+   * Set to `true` to allow requests to carry .(DOT) character
+   * default: false
+   */
+  disableDotRule?: boolean
 }
 
 /**
@@ -448,6 +456,7 @@ export async function createServer(
   if (!middlewareMode) {
     middlewares.use(
       history({
+        disableDotRule: !!serverConfig.disableDotRule,
         logger: createDebugger('vite:spa-fallback'),
         // support /dir/ without explicit index.html
         rewrites: [
