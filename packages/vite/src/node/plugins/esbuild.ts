@@ -6,7 +6,8 @@ import {
   Message,
   Loader,
   TransformOptions,
-  TransformResult
+  TransformResult,
+  build
 } from 'esbuild'
 import { cleanUrl, createDebugger, generateCodeFrame } from '../utils'
 import { RawSourceMap } from '@ampproject/remapping/dist/types/types'
@@ -134,6 +135,25 @@ export const buildEsbuildPlugin = (config: ResolvedConfig): Plugin => {
         target: target || undefined,
         minify
       })
+    }
+  }
+}
+export const bundleEsbuildPlugin = (config: ResolvedConfig): Plugin => {
+  return {
+    name: 'vite:esbuild-bundle',
+    async renderChunk(code, chunk, opts) {
+      const result = await build({
+        stdin: {
+          contents: code,
+          resolveDir: config.root
+        },
+        bundle: true,
+        write: false,
+        format: 'iife'
+      })
+      return {
+        code: result.outputFiles![0]!.text
+      }
     }
   }
 }

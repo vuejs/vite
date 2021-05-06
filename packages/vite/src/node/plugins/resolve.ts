@@ -204,7 +204,10 @@ export function resolvePlugin(baseOptions: InternalResolveOptions): Plugin {
         }
 
         if ((res = tryNodeResolve(id, importer, options, ssr, server))) {
-          return res
+          return {
+            id,
+            external: true
+          }
         }
 
         // node built-ins.

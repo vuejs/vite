@@ -19,12 +19,11 @@ import Rollup, {
 } from 'rollup'
 import { buildReporterPlugin } from './plugins/reporter'
 import { buildHtmlPlugin } from './plugins/html'
-import { buildEsbuildPlugin } from './plugins/esbuild'
+import { buildEsbuildPlugin, bundleEsbuildPlugin } from './plugins/esbuild'
 import { terserPlugin } from './plugins/terser'
 import { Terser } from 'types/terser'
 import { copyDir, emptyDir, lookupFile, normalizePath } from './utils'
 import { manifestPlugin } from './plugins/manifest'
-import commonjsPlugin from '@rollup/plugin-commonjs'
 import { RollupCommonJSOptions } from 'types/commonjs'
 import dynamicImportVars from '@rollup/plugin-dynamic-import-vars'
 import { Logger } from './logger'
@@ -258,7 +257,6 @@ export function resolveBuildPlugins(
   return {
     pre: [
       buildHtmlPlugin(config),
-      commonjsPlugin(options.commonjsOptions),
       dataURIPlugin(),
       dynamicImportVars({
         warnOnError: true,
@@ -269,6 +267,7 @@ export function resolveBuildPlugins(
     post: [
       buildImportAnalysisPlugin(config),
       buildEsbuildPlugin(config),
+      bundleEsbuildPlugin(config),
       ...(options.minify && options.minify !== 'esbuild'
         ? [terserPlugin(options.terserOptions)]
         : []),
