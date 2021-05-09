@@ -25,6 +25,16 @@ export default {
 }
 ```
 
+## Specifying Additional Babel Plugins
+
+```js
+export default {
+  plugins: [reactRefresh({
+    plugins: ['@emotion/babel-plugin']
+  })]
+}
+```
+
 [Full list of Babel parser plugins](https://babeljs.io/docs/en/babel-parser#ecmascript-proposalshttpsgithubcombabelproposals).
 
 ## Specifying files to include or exclude from refreshing

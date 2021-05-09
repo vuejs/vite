@@ -2,6 +2,7 @@
 const fs = require('fs')
 const { transformSync, ParserOptions } = require('@babel/core')
 const { createFilter } = require('@rollup/pluginutils')
+
 const runtimePublicPath = '/@react-refresh'
 const runtimeFilePath = require.resolve(
   'react-refresh/cjs/react-refresh-runtime.development.js'
@@ -100,7 +101,7 @@ function reactRefreshPlugin(opts) {
         // commonly used with TS.
         parserPlugins.push('typescript', 'decorators-legacy')
       }
-      if (opts && opts.parserPlugins) {
+      if (opts && Array.isArray(opts.parserPlugins)) {
         parserPlugins.push(...opts.parserPlugins)
       }
 
@@ -120,7 +121,8 @@ function reactRefreshPlugin(opts) {
         plugins: [
           require('@babel/plugin-transform-react-jsx-self'),
           require('@babel/plugin-transform-react-jsx-source'),
-          [require('react-refresh/babel'), { skipEnvCheck: true }]
+          [require('react-refresh/babel'), { skipEnvCheck: true }],
+          ...(opts && Array.isArray(opts.plugins) ? opts.plugins : [])
         ],
         ast: !isReasonReact,
         sourceMaps: true,
