@@ -86,3 +86,27 @@ export function createWebSocketServer(
     }
   }
 }
+
+export function createMockWebSocketServer(
+  _server: Server | null,
+  config: ResolvedConfig
+) {
+  return {
+    send(payload: HMRPayload) {
+      if (payload.type === 'error') {
+        config.logger.info(
+          chalk.red(`WebSocket server [mock] error:\n${payload.err.message}`)
+        )
+      } else {
+        const formattedPayload = JSON.stringify(payload, undefined, 2)
+        config.logger.info(
+          chalk.dim(`WebSocket server [mock] payload:\n${formattedPayload}`)
+        )
+      }
+    },
+
+    close() {
+      return Promise.resolve()
+    }
+  }
+}

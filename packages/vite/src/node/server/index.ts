@@ -15,7 +15,11 @@ import {
   PluginContainer
 } from '../server/pluginContainer'
 import { FSWatcher, WatchOptions } from 'types/chokidar'
-import { createWebSocketServer, WebSocketServer } from '../server/ws'
+import {
+  createMockWebSocketServer,
+  createWebSocketServer,
+  WebSocketServer
+} from '../server/ws'
 import { baseMiddleware } from './middlewares/base'
 import { proxyMiddleware, ProxyOptions } from './middlewares/proxy'
 import { transformMiddleware } from './middlewares/transform'
@@ -283,7 +287,10 @@ export async function createServer(
   const httpServer = middlewareMode
     ? null
     : await resolveHttpServer(serverConfig, middlewares)
-  const ws = createWebSocketServer(httpServer, config)
+  const ws =
+    config.server.hmr === false
+      ? createMockWebSocketServer(httpServer, config)
+      : createWebSocketServer(httpServer, config)
 
   const { ignored = [], ...watchOptions } = serverConfig.watch || {}
   const watcher = chokidar.watch(path.resolve(root), {
