@@ -248,6 +248,21 @@ const modules = {
 }
 ```
 
+You can also pass the second argument to ignore some files:
+
+```js
+const modules = import.meta.glob('./dir/*.js', '**/b*.*')
+```
+
+That will ignore all files whose name starts with `b`, the file `./dir/bar.js` will be ignored, the above will be transformed into the following:
+
+```js
+// code produced by vite
+const modules = {
+  './dir/foo.js': () => import('./dir/foo.js')
+}
+```
+
 Note that:
 
 - This is a Vite-only feature and is not a web or ES standard.

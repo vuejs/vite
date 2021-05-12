@@ -26,7 +26,8 @@ interface ImportMeta {
   readonly env: ImportMetaEnv
 
   glob(
-    pattern: string
+    pattern: string,
+    ignore?: string
   ): Record<
     string,
     () => Promise<{
@@ -35,7 +36,8 @@ interface ImportMeta {
   >
 
   globEager(
-    pattern: string
+    pattern: string,
+    ignore?: string
   ): Record<
     string,
     {

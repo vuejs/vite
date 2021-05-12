@@ -177,9 +177,9 @@ export async function handleFileAddUnlink(
     delete server._globImporters[file]
   } else {
     for (const i in server._globImporters) {
-      const { module, base, pattern } = server._globImporters[i]
+      const { module, base, pattern, ignore } = server._globImporters[i]
       const relative = path.relative(base, file)
-      if (match(relative, pattern)) {
+      if (match(relative, pattern) && (!ignore || !match(relative, ignore))) {
         modules.push(module)
       }
     }

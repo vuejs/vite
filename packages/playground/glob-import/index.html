@@ -2,7 +2,8 @@
 
 <script type="module" src="./dir/index.js"></script>
 <script type="module">
-  const modules = import.meta.glob('/dir/**')
+  import sortObjectDeep from './sortObjectDeep'
+  const modules = sortObjectDeep(import.meta.glob('/dir/**'))
 
   for (const path in modules) {
     modules[path]().then((mod) => {
@@ -14,7 +15,7 @@
   Promise.all(keys.map((key) => modules[key]())).then((mods) => {
     const res = {}
     mods.forEach((m, i) => {
-      res[keys[i]] = m
+      res[keys[i]] = typeof m === 'object' ? sortObjectDeep(m) : m
     })
     document.querySelector('.result').textContent = JSON.stringify(res, null, 2)
   })

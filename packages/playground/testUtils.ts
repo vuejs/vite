@@ -119,3 +119,49 @@ export async function untilUpdated(
     }
   }
 }
+
+/**
+ * Sort an object by key, { c: 1, b: 3, a: 2, e: 4 } => { a: 2, b: 3, c: 1, e: 4 }
+ * @param target
+ */
+export function sortObjectDeep<T extends object = object>(target: T): T {
+  if (!target || typeof target !== 'object') return target
+  return Object.keys(target)
+    .sort()
+    .reduce<T>(
+      (acc, item) => ({
+        ...acc,
+        [item]:
+          typeof target[item] === 'object'
+            ? sortObjectDeep(target[item])
+            : target[item]
+      }),
+      {} as T
+    )
+}
+
+export function stringifyObjectWithSort(
+  value: any,
+  replacer?: (this: any, key: string, value: any) => any,
+  space?: string | number
+): string
+export function stringifyObjectWithSort(
+  value: any,
+  replacer?: (number | string)[] | null,
+  space?: string | number
+): string
+export function stringifyObjectWithSort(
+  value: any,
+  replacer?:
+    | ((this: any, key: string, value: any) => any)
+    | (number | string)[]
+    | null,
+  space?: string | number
+): string {
+  const finalValue = typeof value === 'object' ? sortObjectDeep(value) : value
+  // Must check to fix overload of JSON.stringify
+  if (typeof replacer === 'function') {
+    return JSON.stringify(finalValue, replacer, space)
+  }
+  return JSON.stringify(finalValue, replacer, space)
+}

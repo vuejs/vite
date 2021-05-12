@@ -274,6 +274,7 @@ export interface ViteDevServer {
     {
       base: string
       pattern: string
+      ignore?: string
       module: ModuleNode
     }
   >

@@ -23,6 +23,7 @@ export async function transformImportGlob(
   endIndex: number
   isEager: boolean
   pattern: string
+  ignore?: string
   base: string
 }> {
   const isEager = source.slice(pos, pos + 21) === 'import.meta.globEager'
@@ -36,7 +37,7 @@ export async function transformImportGlob(
   importer = cleanUrl(importer)
   const importerBasename = path.basename(importer)
 
-  let [pattern, endIndex] = lexGlobPattern(source, pos)
+  let [pattern, ignore, endIndex] = lexGlobPattern(source, pos)
   if (!pattern.startsWith('.') && !pattern.startsWith('/')) {
     throw err(`pattern must start with "." or "/" (relative to project root)`)
   }
@@ -59,7 +60,7 @@ export async function transformImportGlob(
   }
   const files = glob.sync(pattern, {
     cwd: base,
-    ignore: ['**/node_modules/**']
+    ignore: ['**/node_modules/**', ...(ignore ? [ignore] : [])]
   })
   const imports: string[] = []
   let importsString = ``
@@ -102,6 +103,7 @@ export async function transformImportGlob(
     endIndex,
     isEager,
     pattern,
+    ignore,
     base
   }
 }
@@ -110,14 +112,30 @@ const enum LexerState {
   inCall,
   inSingleQuoteString,
   inDoubleQuoteString,
-  inTemplateString
+  inTemplateString,
+  inComma
 }
 
-function lexGlobPattern(code: string, pos: number): [string, number] {
+function lexGlobPattern(
+  code: string,
+  pos: number
+): [string, string | undefined, number] {
+  const startPos = code.indexOf(`(`, pos) + 1
+  const [pattern, endIndexOfPattern] = lexString(code, startPos)
+  const posOfIgnorePattern = findNextArgumentPos(code, endIndexOfPattern)
+  const [ignore, endIndex] =
+    posOfIgnorePattern === -1
+      ? [undefined, endIndexOfPattern]
+      : lexString(code, posOfIgnorePattern)
+
+  return [pattern, ignore, code.indexOf(`)`, endIndex) + 1]
+}
+
+function lexString(code: string, pos: number): [string, number] {
   let state = LexerState.inCall
   let pattern = ''
 
-  let i = code.indexOf(`(`, pos) + 1
+  let i = pos
   outer: for (; i < code.length; i++) {
     const char = code.charAt(i)
     switch (state) {
@@ -159,12 +177,51 @@ function lexGlobPattern(code: string, pos: number): [string, number] {
         throw new Error('unknown import.meta.glob lexer state')
     }
   }
-  return [pattern, code.indexOf(`)`, i) + 1]
+  return [pattern, i + 1]
+}
+
+// it will return -1 if not found next argument
+function findNextArgumentPos(code: string, pos: number): number {
+  let state: LexerState.inComma | undefined = undefined
+  let i = pos
+  outer: for (; i < code.length; i++) {
+    const char = code.charAt(i)
+    switch (state) {
+      case undefined:
+        if (char === ',') {
+          state = LexerState.inComma
+        } else if (char === ')') {
+          i = -1
+          break outer
+        } else if (/\s/.test(char)) {
+          continue
+        } else {
+          error(i)
+        }
+        break
+      case LexerState.inComma:
+        if (char === `'`) {
+          break outer
+        } else if (char === `"`) {
+          break outer
+        } else if (char === '`') {
+          break outer
+        } else if (/\s/.test(char)) {
+          continue
+        } else {
+          error(i)
+        }
+        break
+      default:
+        throw new Error('unknown import.meta.glob lexer state')
+    }
+  }
+  return i
 }
 
 function error(pos: number) {
   const err = new Error(
-    `import.meta.glob() can only accept string literals.`
+    `import.meta.glob() can only accept one or two string literals.`
   ) as RollupError
   err.pos = pos
   throw err
