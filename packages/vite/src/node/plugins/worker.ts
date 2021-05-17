@@ -6,6 +6,7 @@ import { fileToUrl } from './asset'
 import { cleanUrl, injectQuery } from '../utils'
 import Rollup from 'rollup'
 import { ENV_PUBLIC_PATH } from '../constants'
+import fs from 'fs'
 
 function parseWorkerRequest(id: string): ParsedUrlQuery | null {
   const { search } = parseUrl(id)
@@ -24,8 +25,9 @@ export function webWorkerPlugin(config: ResolvedConfig): Plugin {
     name: 'vite:worker',
 
     load(id) {
-      if (isBuild && parseWorkerRequest(id)?.worker != null) {
-        return ''
+      const query = parseWorkerRequest(id)
+      if (query && (query.worker != null || query[WorkerFileId] != null)) {
+        return fs.readFileSync(cleanUrl(id), 'utf-8')
       }
     },
 

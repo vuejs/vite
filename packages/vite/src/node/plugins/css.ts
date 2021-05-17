@@ -230,6 +230,12 @@ export function cssPostPlugin(config: ResolvedConfig): Plugin {
   return {
     name: 'vite:css-post',
 
+    load(id) {
+      if (isDirectCSSRequest(id)) {
+        return fs.readFileSync(cleanUrl(id), 'utf-8')
+      }
+    },
+
     transform(css, id, ssr) {
       if (!cssLangRE.test(id) || commonjsProxyRE.test(id)) {
         return

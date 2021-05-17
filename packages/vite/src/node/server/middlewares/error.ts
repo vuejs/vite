@@ -67,6 +67,7 @@ export function errorMiddleware(
         res.statusCode = 403
         res.write(renderErrorHTML(err.message))
         res.end()
+        return
       }
       res.statusCode = 500
       res.end()

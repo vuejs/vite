@@ -148,6 +148,11 @@ export function removeTimestampQuery(url: string): string {
   return url.replace(timestampRE, '').replace(trailingSeparatorRE, '')
 }
 
+const versionRE = /\bv=\w{8}&?\b/
+export function removeVersionQuery(url: string): string {
+  return url.replace(versionRE, '').replace(trailingSeparatorRE, '')
+}
+
 export async function asyncReplace(
   input: string,
   re: RegExp,

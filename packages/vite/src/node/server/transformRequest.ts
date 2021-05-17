@@ -11,7 +11,8 @@ import {
   prettifyUrl,
   removeTimestampQuery,
   timeFrom,
-  ensureWatchedFile
+  ensureWatchedFile,
+  removeVersionQuery
 } from '../utils'
 import { checkPublicFile } from '../plugins/asset'
 import { ssrTransform } from '../ssr/ssrTransform'
@@ -40,7 +41,7 @@ export async function transformRequest(
   { config, pluginContainer, moduleGraph, watcher }: ViteDevServer,
   options: TransformOptions = {}
 ): Promise<TransformResult | null> {
-  url = removeTimestampQuery(url)
+  url = removeVersionQuery(removeTimestampQuery(url))
   const { root, logger } = config
   const prettyUrl = isDebug ? prettifyUrl(url, root) : ''
   const ssr = !!options.ssr
@@ -73,17 +74,11 @@ export async function transformRequest(
     // try fallback loading it from fs as string
     // if the file is a binary, there should be a plugin that already loaded it
     // as string
-    try {
-      if (!options.ssr) {
-        ensureServingAccess(file, config.server.fsServe, config.logger)
-      }
-      code = await fs.readFile(file, 'utf-8')
-      isDebug && debugLoad(`${timeFrom(loadStart)} [fs] ${prettyUrl}`)
-    } catch (e) {
-      if (e.code !== 'ENOENT') {
-        throw e
-      }
+    if (!options.ssr) {
+      ensureServingAccess(file, config.server.fsServe, config.logger)
     }
+    code = await fs.readFile(id, 'utf-8')
+    isDebug && debugLoad(`${timeFrom(loadStart)} [fs] ${prettyUrl}`)
     if (code) {
       try {
         map = (
