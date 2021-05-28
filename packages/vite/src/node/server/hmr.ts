@@ -464,12 +464,18 @@ async function readModifiedFile(file: string): Promise<string> {
   }
 }
 
-export async function restartServer(server: ViteDevServer): Promise<void> {
+export async function restartServer(
+  server: ViteDevServer,
+  force = false
+): Promise<void> {
   // @ts-ignore
   global.__vite_start_time = Date.now()
   let newServer = null
   try {
-    newServer = await createServer(server.config.inlineConfig)
+    newServer = await createServer({
+      ...server.config.inlineConfig,
+      server: { force }
+    })
   } catch (err) {
     server.ws.send({
       type: 'error',

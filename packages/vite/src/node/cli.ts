@@ -6,6 +6,7 @@ import { createLogger, LogLevel } from './logger'
 import { resolveConfig } from '.'
 import { preview } from './preview'
 import { restartServer } from './server/hmr'
+import { openBrowser, resolveBrowserUrl } from './server/openBrowser'
 
 const cli = cac('vite')
 
@@ -54,12 +55,27 @@ function cleanOptions(options: GlobalCLIOptions) {
 function listenRestart(server: ViteDevServer) {
   process.stdin.resume()
   process.stdin.setEncoding('utf8')
+  //   process.stdin.setRawMode(true)
+  process.stdout.write(`
+  Available commands:
+    Press "r" to restart the dev server.
+    Press "f" to rebuild the optimized dependency cache.
+    Press "o" to open the browser.
+  `)
   process.stdin.on('data', async (data) => {
     const str = data.toString().trim().toLowerCase()
-    // if the keys entered match the restartable value, then restart!
-    // we can make the restart word configurable if necessary
-    if (str === 'rs') {
-      await restartServer(server)
+    switch (str) {
+      case 'r':
+        await restartServer(server)
+        break
+      case 'f':
+        await restartServer(server, true)
+        break
+      case 'o':
+        openBrowser(resolveBrowserUrl(server), true, server.config.logger)
+        break
+      default:
+        break
     }
   })
 }
