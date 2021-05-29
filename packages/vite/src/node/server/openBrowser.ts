@@ -15,6 +15,7 @@ import chalk from 'chalk'
 import { execSync } from 'child_process'
 import { Logger } from '../logger'
 import type { ViteDevServer } from './index'
+import { resolveHostname } from '../utils'
 // https://github.com/sindresorhus/open#app
 const OSX_CHROME = 'google chrome'
 
@@ -39,14 +40,12 @@ export function openBrowser(
 }
 
 export function resolveBrowserUrl(server: ViteDevServer): string {
-  const options = server.config.server || {}
-  const port = options.port
-  let hostname = options.host || 'localhost'
-  if (hostname === '0.0.0.0') hostname = 'localhost'
+  const options = server.config.server
+  const hostname = resolveHostname(options.host)
+  const port = options.port || 3000
   const protocol = options.https ? 'https' : 'http'
-  const path =
-    typeof options.open === 'string' ? options.open : server.config.base
-  return `${protocol}://${hostname}:${port}${path}`
+  const path = typeof options.open === 'string' ? options.open : options.base
+  return `${protocol}://${hostname.name}:${port}${path ?? '/'}`
 }
 
 function executeNodeScript(scriptPath: string, url: string, logger: Logger) {
