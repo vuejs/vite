@@ -471,10 +471,11 @@ export async function restartServer(
   // @ts-ignore
   global.__vite_start_time = Date.now()
   let newServer = null
+  const { server: serverConfig, ...others } = server.config.inlineConfig
   try {
     newServer = await createServer({
-      ...server.config.inlineConfig,
-      server: { force }
+      ...others,
+      ...{ ...serverConfig, force }
     })
   } catch (err) {
     server.ws.send({
