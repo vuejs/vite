@@ -7,11 +7,18 @@
     "Alec Larson"
   ],
   "files": [
+    "dist",
     "src"
   ],
-  "main": "src/index.js",
+  "main": "dist/index.js",
+  "module": "src/index.js",
   "types": "src/index.d.ts",
+  "exports": {
+    "import": "./src/index.js",
+    "require": "./dist/index.js"
+  },
   "scripts": {
+    "build": "esbuild src/*.js --platform=node --target=node12 --sourcemap --format=cjs --outdir=dist",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s --commit-path . --lerna-package plugin-react",
     "release": "node ../../scripts/release.js --skipBuild"
   },
@@ -32,6 +39,7 @@
     "@babel/plugin-transform-react-jsx-self": "^7.14.5",
     "@babel/plugin-transform-react-jsx-source": "^7.14.5",
     "@rollup/pluginutils": "^4.1.0",
-    "react-refresh": "^0.10.0"
+    "react-refresh": "^0.10.0",
+    "vite-react-jsx": "^1.1.0"
   }
 }
