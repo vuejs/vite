@@ -621,6 +621,8 @@ async function startServer(
       )
 
       printServerUrls(hostname, protocol, port, base, info)
+      // print shortcuts info
+      info(`  > Shortcuts: "r" restart, "o" open browser, "f" force restart`)
 
       // @ts-ignore
       if (global.__vite_start_time) {

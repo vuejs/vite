@@ -55,13 +55,6 @@ function cleanOptions(options: GlobalCLIOptions) {
 function listenRestart(server: ViteDevServer) {
   process.stdin.resume()
   process.stdin.setEncoding('utf8')
-  //   process.stdin.setRawMode(true)
-  process.stdout.write(`
-  Available commands:
-    Press "r" to restart the dev server.
-    Press "f" to rebuild the optimized dependency cache.
-    Press "o" to open the browser.
-  `)
   process.stdin.on('data', async (data) => {
     const str = data.toString().trim().toLowerCase()
     switch (str) {
