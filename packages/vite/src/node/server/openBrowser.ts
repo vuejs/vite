@@ -44,8 +44,9 @@ export function resolveBrowserUrl(server: ViteDevServer): string {
   const hostname = resolveHostname(options.host)
   const port = options.port || 3000
   const protocol = options.https ? 'https' : 'http'
-  const path = typeof options.open === 'string' ? options.open : options.base
-  return `${protocol}://${hostname.name}:${port}${path ?? '/'}`
+  const path =
+    typeof options.open === 'string' ? options.open : server.config.base
+  return `${protocol}://${hostname.name}:${port}${path}`
 }
 
 function executeNodeScript(scriptPath: string, url: string, logger: Logger) {
