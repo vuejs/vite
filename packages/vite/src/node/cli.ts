@@ -52,7 +52,7 @@ function cleanOptions(options: GlobalCLIOptions) {
   return ret
 }
 
-function listenRestart(server: ViteDevServer) {
+function bindShortcut(server: ViteDevServer) {
   process.stdin.resume()
   process.stdin.setEncoding('utf8')
   process.stdin.on('data', async (data) => {
@@ -112,7 +112,7 @@ cli
         server: cleanOptions(options) as ServerOptions
       })
       await server.listen()
-      listenRestart(server)
+      bindShortcut(server)
     } catch (e) {
       createLogger(options.logLevel).error(
         chalk.red(`error when starting dev server:\n${e.stack}`)
