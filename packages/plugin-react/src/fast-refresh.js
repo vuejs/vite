@@ -46,18 +46,17 @@ if (import.meta.hot) {
   prevRefreshReg = window.$RefreshReg$;
   prevRefreshSig = window.$RefreshSig$;
   window.$RefreshReg$ = (type, id) => {
-    RefreshRuntime.register(type, ${JSON.stringify(id)} + " " + id)
+    RefreshRuntime.register(type, __SOURCE__ + " " + id)
   };
   window.$RefreshSig$ = RefreshRuntime.createSignatureFunctionForTransform;
 }`.replace(/[\n]+/gm, '')
 
-export function addRefreshWrapper(code, accept) {
-  const footer = `
+const footer = `
 if (import.meta.hot) {
   window.$RefreshReg$ = prevRefreshReg;
   window.$RefreshSig$ = prevRefreshSig;
 
-  ${accept ? `import.meta.hot.accept();` : ``}
+  __ACCEPT__
   if (!window.__vite_plugin_react_timeout) {
     window.__vite_plugin_react_timeout = setTimeout(() => {
       window.__vite_plugin_react_timeout = 0;
@@ -66,7 +65,12 @@ if (import.meta.hot) {
   }
 }`
 
-  return header + code + footer
+export function addRefreshWrapper(code, id, accept) {
+  return (
+    header.replace('__SOURCE__', JSON.stringify(id)) +
+    code +
+    footer.replace('__ACCEPT__', accept ? 'import.meta.hot.accept();' : '')
+  )
 }
 
 /**

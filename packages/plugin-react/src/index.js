@@ -138,7 +138,7 @@ export default function viteReact(opts = {}) {
         if (result) {
           if (useFastRefresh && /\$RefreshReg\$\(/.test(result.code)) {
             const accept = isReasonReact || isRefreshBoundary(result.ast)
-            result.code = addRefreshWrapper(result.code, accept)
+            result.code = addRefreshWrapper(result.code, id, accept)
           }
           return {
             code: result.code,
