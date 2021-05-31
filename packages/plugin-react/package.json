@@ -41,5 +41,8 @@
     "@rollup/pluginutils": "^4.1.0",
     "react-refresh": "^0.10.0",
     "vite-react-jsx": "^1.1.0"
+  },
+  "devDependencies": {
+    "vite": "link:../vite"
   }
 }
