@@ -1,4 +1,6 @@
-// @ts-check
+import type { BabelFileResult } from '@babel/core'
+// eslint-disable-next-line node/no-extraneous-import
+import type { Node } from '@babel/types'
 import fs from 'fs'
 
 export const runtimePublicPath = '/@react-refresh'
@@ -65,7 +67,11 @@ if (import.meta.hot) {
   }
 }`
 
-export function addRefreshWrapper(code, id, accept) {
+export function addRefreshWrapper(
+  code: string,
+  id: string,
+  accept: boolean
+): string {
   return (
     header.replace('__SOURCE__', JSON.stringify(id)) +
     code +
@@ -73,10 +79,7 @@ export function addRefreshWrapper(code, id, accept) {
   )
 }
 
-/**
- * @param {import('@babel/core').BabelFileResult['ast']} ast
- */
-export function isRefreshBoundary(ast) {
+export function isRefreshBoundary(ast: BabelFileResult['ast']): boolean {
   // Every export must be a React component.
   return ast.program.body.every((node) => {
     if (node.type !== 'ExportNamedDeclaration') {
@@ -99,16 +102,10 @@ export function isRefreshBoundary(ast) {
   })
 }
 
-/**
- * @param {import('@babel/types').Node} node
- */
-function isComponentLikeIdentifier(node) {
+function isComponentLikeIdentifier(node: Node): boolean {
   return node.type === 'Identifier' && isComponentLikeName(node.name)
 }
 
-/**
- * @param {string} name
- */
-function isComponentLikeName(name) {
+function isComponentLikeName(name: string): boolean {
   return typeof name === 'string' && name[0] >= 'A' && name[0] <= 'Z'
 }
