@@ -475,7 +475,7 @@ export async function restartServer(
   try {
     newServer = await createServer({
       ...others,
-      ...{ ...serverConfig, force }
+      server: { ...serverConfig, force }
     })
   } catch (err) {
     server.ws.send({
