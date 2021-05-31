@@ -43,8 +43,7 @@ export default function viteReact(opts = {}) {
           'topLevelAwait',
           'classProperties',
           'classPrivateProperties',
-          'classPrivateMethods',
-          'objectRestSpread'
+          'classPrivateMethods'
         ]
 
         const isTypeScript = /\.tsx?$/.test(id)
