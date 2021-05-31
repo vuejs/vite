@@ -210,6 +210,8 @@ export default function viteReact(opts = {}) {
   ]
 }
 
+viteReact.preambleCode = preambleCode
+
 function interopDefault(promise) {
   return promise.then((module) => module.default || module)
 }
