@@ -54,6 +54,7 @@ import { printServerUrls } from '../logger'
 import { resolveHostname } from '../utils'
 import { searchForWorkspaceRoot } from './searchRoot'
 import { CLIENT_DIR } from '../constants'
+import { SHORTCUTS } from '../cli'
 
 export interface ServerOptions {
   host?: string | boolean
@@ -622,7 +623,11 @@ async function startServer(
 
       printServerUrls(hostname, protocol, port, base, info)
       // print shortcuts info
-      info(`  > Shortcuts: "r" restart, "o" open browser, "f" force restart`)
+      info(
+        `  > Shortcuts: ${SHORTCUTS.map(
+          (item) => `${item.name} ${item.desc}`
+        ).join(', ')}`
+      )
 
       // @ts-ignore
       if (global.__vite_start_time) {

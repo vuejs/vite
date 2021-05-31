@@ -52,23 +52,42 @@ function cleanOptions(options: GlobalCLIOptions) {
   return ret
 }
 
+export const SHORTCUTS = [
+  {
+    name: 'r',
+    desc: 'restart',
+    action(server: ViteDevServer): void {
+      restartServer(server)
+    }
+  },
+  {
+    name: 'o',
+    desc: 'open browser',
+    action(server: ViteDevServer): void {
+      openBrowser(resolveBrowserUrl(server), true, server.config.logger)
+    }
+  },
+  {
+    name: 'f',
+    desc: 'force restart',
+    action(server: ViteDevServer): void {
+      restartServer(server, true)
+    }
+  }
+]
+
 function bindShortcut(server: ViteDevServer) {
   process.stdin.resume()
   process.stdin.setEncoding('utf8')
-  process.stdin.on('data', async (data) => {
+  process.stdin.on('data', (data) => {
     const str = data.toString().trim().toLowerCase()
-    switch (str) {
-      case 'r':
-        await restartServer(server)
-        break
-      case 'f':
-        await restartServer(server, true)
-        break
-      case 'o':
-        openBrowser(resolveBrowserUrl(server), true, server.config.logger)
-        break
-      default:
-        break
+    const sh = SHORTCUTS.filter((item) => item.name === str)[0]
+    if (sh) {
+      sh.action(server)
+    } else {
+      createLogger(server.config.logLevel).error(
+        chalk.red(`Invalid ShortCut: ${str}`)
+      )
     }
   })
 }
