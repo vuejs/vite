@@ -18,7 +18,10 @@
     "require": "./dist/index.js"
   },
   "scripts": {
-    "build": "esbuild src/*.js --platform=node --target=node12 --sourcemap --format=cjs --outdir=dist",
+    "dev": "tsc -p . -w --incremental",
+    "build": "rimraf dist && run-s build-bundle build-types",
+    "build-bundle": "esbuild src/index.ts --bundle --platform=node --target=node12 --outfile=dist/index.js",
+    "build-types": "tsc -p . --emitDeclarationOnly --outDir temp && api-extractor run && rimraf temp",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s --commit-path . --lerna-package plugin-react",
     "release": "node ../../scripts/release.js --skipBuild"
   },

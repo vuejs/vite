@@ -68,7 +68,7 @@ if (import.meta.hot) {
 }`
 
 export function addRefreshWrapper(
-  code: string,
+  code: string | null | undefined,
   id: string,
   accept: boolean
 ): string {
@@ -93,6 +93,7 @@ export function isRefreshBoundary(ast: BabelFileResult['ast']): boolean {
         )
       }
       if (declaration.type === 'FunctionDeclaration') {
+        // @ts-expect-error: TODO: declaration.id can be null | undefined
         return isComponentLikeIdentifier(declaration.id)
       }
     }
