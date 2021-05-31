@@ -625,7 +625,7 @@ async function startServer(
       // print shortcuts info
       info(
         `  > Shortcuts: ${SHORTCUTS.map(
-          (item) => `${item.name} ${item.desc}`
+          (item) => `"${item.name}" ${item.desc}`
         ).join(', ')}`
       )
 
