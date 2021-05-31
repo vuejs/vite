@@ -1,3 +1,4 @@
+// @ts-check
 import fs from 'fs'
 
 export const runtimePublicPath = '/@react-refresh'
