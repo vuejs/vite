@@ -107,8 +107,8 @@ export default function ({ types: t }: typeof babel): babel.PluginObj {
     ) {
       const props = node.arguments.map(getJSXProps)
       //if calling this recursively works, flatten.
-      if (props.every(prop => prop !== null)) {
-        return [].concat.apply([], props as any[])
+      if (props.every((prop) => prop !== null)) {
+        return ([] as any[]).concat.apply([], props as any[])
       }
     }
 
@@ -143,9 +143,9 @@ export default function ({ types: t }: typeof babel): babel.PluginObj {
 
   function getJSXChildren(nodes: any[]) {
     const children = nodes
-      .filter(node => !isNullLikeNode(node))
+      .filter((node) => !isNullLikeNode(node))
       .map(getJSXChild)
-    if (children.some(child => child == null)) {
+    if (children.some((child) => child == null)) {
       return null
     }
     return children
@@ -197,7 +197,7 @@ export default function ({ types: t }: typeof babel): babel.PluginObj {
   const isPlainObjectExpression = (node: any) =>
     t.isObjectExpression(node) &&
     node.properties.every(
-      m =>
+      (m) =>
         t.isSpreadElement(m) ||
         (t.isObjectProperty(m, { computed: false }) &&
           getJSXIdentifier(m.key) !== null &&
@@ -212,7 +212,7 @@ export default function ({ types: t }: typeof babel): babel.PluginObj {
           return null
         }
         path.replaceWith(node)
-      },
-    },
+      }
+    }
   }
 }

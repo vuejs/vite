@@ -1,5 +1,4 @@
-import { TransformOptions, ParserOptions } from '@babel/core'
-import babel from '@babel/core'
+import babel, { TransformOptions, ParserOptions } from '@babel/core'
 import { createFilter } from '@rollup/pluginutils'
 import resolve from 'resolve'
 import { Plugin } from 'vite'
@@ -10,8 +9,8 @@ import {
   runtimeCode,
   runtimePublicPath
 } from './fast-refresh'
-import { restoreJSX } from './jsx-runtime/restore-jsx'
 import { babelImportToRequire } from './jsx-runtime/babel-import-to-require'
+import { restoreJSX } from './jsx-runtime/restore-jsx'
 
 export interface Options {
   include?: string | RegExp | Array<string | RegExp>
