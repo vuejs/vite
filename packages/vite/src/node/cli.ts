@@ -52,7 +52,13 @@ function cleanOptions(options: GlobalCLIOptions) {
   return ret
 }
 
-export const SHORTCUTS = [
+export interface Shortcut {
+  name: string
+  desc: string
+  action(server: ViteDevServer): void
+}
+
+export const SHORTCUTS: Shortcut[] = [
   {
     name: 'r',
     desc: 'restart',
