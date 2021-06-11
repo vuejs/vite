@@ -1,4 +1,4 @@
-import babel, { TransformOptions, ParserOptions } from '@babel/core'
+import babel, { ParserOptions, TransformOptions, types as t } from '@babel/core'
 import { createFilter } from '@rollup/pluginutils'
 import resolve from 'resolve'
 import type { Plugin, PluginOption } from 'vite'
@@ -99,7 +99,7 @@ export default function viteReact(opts: Options = {}): PluginOption[] {
           }
         }
 
-        let ast
+        let ast: t.File | null | undefined
         if (id.endsWith('x')) {
           if (opts.jsxRuntime === 'automatic') {
             // By reverse-compiling "React.createElement" calls into JSX,

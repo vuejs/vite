@@ -4,8 +4,8 @@
   "compilerOptions": {
     "outDir": "dist",
     "target": "ES2019",
-    "module": "commonjs",
-    "moduleResolution": "node",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
     "strict": true,
     "declaration": true,
     "sourceMap": true,
