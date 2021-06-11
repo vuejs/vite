@@ -1,6 +1,6 @@
-import type { NodePath } from '@babel/core'
+import type { Visitor } from '@babel/core'
 // eslint-disable-next-line node/no-extraneous-import
-import type { ImportDeclaration, ImportSpecifier } from '@babel/types'
+import type { ImportSpecifier } from '@babel/types'
 
 /**
  * Replace this:
@@ -14,12 +14,12 @@ import type { ImportDeclaration, ImportSpecifier } from '@babel/types'
 export function babelImportToRequire({
   types: t
 }: typeof import('@babel/core')): {
-  visitor: { ImportDeclaration(path: NodePath): void }
+  visitor: Visitor
 } {
   return {
     visitor: {
-      ImportDeclaration(path: NodePath) {
-        const decl = path.node as ImportDeclaration
+      ImportDeclaration(path) {
+        const decl = path.node
         const spec = decl.specifiers[0] as ImportSpecifier
 
         path.replaceWith(

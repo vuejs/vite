@@ -1,6 +1,5 @@
-import type { BabelFileResult } from '@babel/core'
 // eslint-disable-next-line node/no-extraneous-import
-import type { Node } from '@babel/types'
+import type { File, Node } from '@babel/types'
 import fs from 'fs'
 
 export const runtimePublicPath = '/@react-refresh'
@@ -68,7 +67,7 @@ if (import.meta.hot) {
 }`
 
 export function addRefreshWrapper(
-  code: string | null | undefined,
+  code: string,
   id: string,
   accept: boolean
 ): string {
@@ -79,7 +78,7 @@ export function addRefreshWrapper(
   )
 }
 
-export function isRefreshBoundary(ast: BabelFileResult['ast']): boolean {
+export function isRefreshBoundary(ast: File): boolean {
   // Every export must be a React component.
   return ast.program.body.every((node) => {
     if (node.type !== 'ExportNamedDeclaration') {
