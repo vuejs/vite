@@ -1,5 +1,4 @@
-// eslint-disable-next-line node/no-extraneous-import
-import type { File, Node } from '@babel/types'
+import type { types as t } from '@babel/core'
 import fs from 'fs'
 
 export const runtimePublicPath = '/@react-refresh'
@@ -78,7 +77,7 @@ export function addRefreshWrapper(
   )
 }
 
-export function isRefreshBoundary(ast: File): boolean {
+export function isRefreshBoundary(ast: t.File): boolean {
   // Every export must be a React component.
   return ast.program.body.every((node) => {
     if (node.type !== 'ExportNamedDeclaration') {
@@ -101,7 +100,7 @@ export function isRefreshBoundary(ast: File): boolean {
   })
 }
 
-function isComponentLikeIdentifier(node: Node): boolean {
+function isComponentLikeIdentifier(node: t.Node): boolean {
   return node.type === 'Identifier' && isComponentLikeName(node.name)
 }
 

@@ -1,6 +1,4 @@
-import type { Visitor } from '@babel/core'
-// eslint-disable-next-line node/no-extraneous-import
-import type { ImportSpecifier } from '@babel/types'
+import type { types as t, Visitor } from '@babel/core'
 
 /**
  * Replace this:
@@ -20,7 +18,7 @@ export function babelImportToRequire({
     visitor: {
       ImportDeclaration(path) {
         const decl = path.node
-        const spec = decl.specifiers[0] as ImportSpecifier
+        const spec = decl.specifiers[0] as t.ImportSpecifier
 
         path.replaceWith(
           t.variableDeclaration('var', [
