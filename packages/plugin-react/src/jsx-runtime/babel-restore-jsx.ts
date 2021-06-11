@@ -108,7 +108,7 @@ export default function ({ types: t }: typeof babel): babel.PluginObj {
       const props = node.arguments.map(getJSXProps)
       //if calling this recursively works, flatten.
       if (props.every((prop) => prop !== null)) {
-        return ([] as any[]).concat.apply([], props as any[])
+        return props
       }
     }
 
@@ -197,11 +197,11 @@ export default function ({ types: t }: typeof babel): babel.PluginObj {
   const isPlainObjectExpression = (node: any) =>
     t.isObjectExpression(node) &&
     node.properties.every(
-      (m) =>
-        t.isSpreadElement(m) ||
-        (t.isObjectProperty(m, { computed: false }) &&
-          getJSXIdentifier(m.key) !== null &&
-          getJSXAttributeValue(m.value) !== null)
+      (property) =>
+        t.isSpreadElement(property) ||
+        (t.isObjectProperty(property, { computed: false }) &&
+          getJSXIdentifier(property.key) !== null &&
+          getJSXAttributeValue(property.value) !== null)
     )
 
   return {
