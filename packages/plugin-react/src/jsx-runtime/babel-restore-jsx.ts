@@ -125,13 +125,13 @@ export default function ({ types: t }: typeof babel): babel.PluginObj {
     if (!isPlainObjectExpression(node)) {
       return null
     }
-    return node.properties.map((prop: any) =>
+    return node.properties.map((prop) =>
       t.isObjectProperty(prop)
         ? t.jsxAttribute(
             getJSXIdentifier(prop.key)!,
             getJSXAttributeValue(prop.value)
           )
-        : t.jsxSpreadAttribute(prop.argument)
+        : t.jsxSpreadAttribute((prop as t.SpreadElement).argument)
     )
   }
 
