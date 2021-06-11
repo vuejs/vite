@@ -1,7 +1,7 @@
 import babel, { TransformOptions, ParserOptions } from '@babel/core'
 import { createFilter } from '@rollup/pluginutils'
 import resolve from 'resolve'
-import { Plugin } from 'vite'
+import type { Plugin, PluginOption } from 'vite'
 import {
   addRefreshWrapper,
   isRefreshBoundary,
@@ -35,7 +35,7 @@ export interface Options {
   parserPlugins?: ParserOptions['plugins']
 }
 
-export default function viteReact(opts: Options = {}): Plugin {
+export default function viteReact(opts: Options = {}): PluginOption[] {
   let base = '/'
   let projectRoot = process.cwd()
   let isProduction = true
@@ -220,7 +220,8 @@ export default function viteReact(opts: Options = {}): Plugin {
   }
 
   const runtimeId = 'react/jsx-runtime'
-  const viteReactJsx = {
+  // Adapted from https://github.com/alloc/vite-react-jsx
+  const viteReactJsx: Plugin = {
     name: 'vite:react-jsx',
     enforce: 'pre',
     resolveId(id: string) {
@@ -243,7 +244,6 @@ export default function viteReact(opts: Options = {}): Plugin {
     }
   }
 
-  // @ts-expect-error: TODO: fix this
   return [
     viteBabel,
     viteReactRefresh,

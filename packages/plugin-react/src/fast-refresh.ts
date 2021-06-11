@@ -92,8 +92,7 @@ export function isRefreshBoundary(ast: File): boolean {
         )
       }
       if (declaration.type === 'FunctionDeclaration') {
-        // @ts-expect-error: TODO: declaration.id can be null | undefined
-        return isComponentLikeIdentifier(declaration.id)
+        return !!declaration.id && isComponentLikeIdentifier(declaration.id)
       }
     }
     return specifiers.every((spec) => {
