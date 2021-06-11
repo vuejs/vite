@@ -10,18 +10,15 @@
     "dist",
     "src"
   ],
-  "main": "dist/index.js",
-  "module": "src/index.js",
-  "types": "src/index.d.ts",
+  "main": "dist/plugin-react.cjs.js",
+  "module": "dist/plugin-react.es.js",
   "exports": {
-    "import": "./src/index.js",
-    "require": "./dist/index.js"
+    "import": "./dist/plugin-react.es.js",
+    "require": "./dist/plugin-react.cjs.js"
   },
   "scripts": {
-    "dev": "tsc -p . -w --incremental",
-    "build": "rimraf dist && run-s build-bundle build-types",
-    "build-bundle": "esbuild src/index.ts --bundle --platform=node --target=node12 --outfile=dist/index.js",
-    "build-types": "tsc -p . --emitDeclarationOnly --outDir temp && api-extractor run && rimraf temp",
+    "dev": "vite build --watch",
+    "build": "vite build",
     "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s --commit-path . --lerna-package plugin-react",
     "release": "node ../../scripts/release.js --skipBuild"
   },
@@ -47,6 +44,7 @@
     "resolve": "^1.20.0"
   },
   "devDependencies": {
-    "vite": "link:../vite"
+    "vite": "link:../vite",
+    "vite-dts": "^1.0.2"
   }
 }
