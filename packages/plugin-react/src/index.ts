@@ -102,6 +102,9 @@ export default function viteReact(opts: Options = {}): Plugin {
         let ast
         if (id.endsWith('x')) {
           if (opts.jsxRuntime === 'automatic') {
+            // By reverse-compiling "React.createElement" calls into JSX,
+            // React elements provided by dependencies will also use the
+            // automatic runtime!
             const [restoredAst, isCommonJS] = isNodeModules
               ? await restoreJSX(babel, code)
               : [null, false]
