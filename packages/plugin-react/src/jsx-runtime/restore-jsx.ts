@@ -1,8 +1,8 @@
-import type { types as t } from '@babel/core'
+import type { PluginItem, types as t } from '@babel/core'
 
 type RestoredJSX = [result: t.File | null | undefined, isCommonJS: boolean]
 
-let babelRestoreJSX: any
+let babelRestoreJSX: Promise<PluginItem> | undefined
 
 /** Restore JSX from `React.createElement` calls */
 export async function restoreJSX(
