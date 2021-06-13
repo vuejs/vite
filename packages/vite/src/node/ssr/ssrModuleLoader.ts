@@ -1,7 +1,6 @@
-import fs from 'fs'
 import path from 'path'
 import { ViteDevServer } from '..'
-import { cleanUrl, resolveFrom, unwrapId } from '../utils'
+import { unwrapId } from '../utils'
 import { ssrRewriteStacktrace } from './ssrStacktrace'
 import {
   ssrExportAllKey,
@@ -11,6 +10,7 @@ import {
   ssrDynamicImportKey
 } from './ssrTransform'
 import { transformRequest } from '../server/transformRequest'
+import { InternalResolveOptions, tryNodeResolve } from '../plugins/resolve'
 
 interface SSRContext {
   global: NodeJS.Global
@@ -86,11 +86,26 @@ async function instantiateModule(
     })
   )
 
-  const ssrImportMeta = { url }
+  const {
+    isProduction,
+    resolve: { dedupe },
+    root
+  } = server.config
+
+  const resolveOptions: InternalResolveOptions = {
+    conditions: ['node'],
+    dedupe,
+    isBuild: true,
+    isProduction,
+    // Disable "module" condition.
+    isRequire: true,
+    mainFields: ['main'],
+    root
+  }
 
   const ssrImport = (dep: string) => {
     if (isExternal(dep)) {
-      return nodeRequire(dep, mod.file, server.config.root)
+      return nodeRequire(dep, mod.file, resolveOptions)
     } else {
       return moduleGraph.urlToModuleMap.get(unwrapId(dep))?.ssrModule
     }
@@ -98,7 +113,7 @@ async function instantiateModule(
 
   const ssrDynamicImport = (dep: string) => {
     if (isExternal(dep)) {
-      return Promise.resolve(nodeRequire(dep, mod.file, server.config.root))
+      return Promise.resolve(nodeRequire(dep, mod.file, resolveOptions))
     } else {
       // #3087 dynamic import vars is ignored at rewrite import path,
       // so here need process relative path
@@ -123,6 +138,7 @@ async function instantiateModule(
     }
   }
 
+  const ssrImportMeta = { url }
   try {
     new Function(
       `global`,
@@ -156,8 +172,16 @@ async function instantiateModule(
   return ssrModule
 }
 
-function nodeRequire(id: string, importer: string | null, root: string) {
-  const mod = require(resolve(id, importer, root))
+function nodeRequire(
+  id: string,
+  importer: string | null,
+  resolveOptions: InternalResolveOptions
+) {
+  const resolved = tryNodeResolve(id, importer, resolveOptions, false)
+  if (!resolved) {
+    throw Error(`Cannot find module '${id}'`)
+  }
+  const mod = require(resolved.id)
   const defaultExport = mod.__esModule ? mod.default : mod
   // rollup-style default import interop for cjs
   return new Proxy(mod, {
@@ -166,21 +190,4 @@ function nodeRequire(id: string, importer: string | null, root: string) {
       return mod[prop]
     }
   })
-}
-
-const resolveCache = new Map<string, string>()
-
-function resolve(id: string, importer: string | null, root: string) {
-  const key = id + importer + root
-  const cached = resolveCache.get(key)
-  if (cached) {
-    return cached
-  }
-  const resolveDir =
-    importer && fs.existsSync(cleanUrl(importer))
-      ? path.dirname(importer)
-      : root
-  const resolved = resolveFrom(id, resolveDir, true)
-  resolveCache.set(key, resolved)
-  return resolved
 }

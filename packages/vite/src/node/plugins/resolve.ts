@@ -358,7 +358,7 @@ export const idToPkgMap = new Map<string, PackageData>()
 
 export function tryNodeResolve(
   id: string,
-  importer: string | undefined,
+  importer: string | null | undefined,
   options: InternalResolveOptions,
   targetWeb: boolean,
   server?: ViteDevServer
