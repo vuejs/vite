@@ -162,7 +162,9 @@ describe('svg fragments', () => {
 
   test('from js import', async () => {
     const img = await page.$('.svg-frag-import')
-    expect(await img.getAttribute('src')).toMatch(/svg#icon-heart-view$/)
+    expect(await img.getAttribute('src')).toMatch(
+      isBuild ? /svg%3e#icon-heart-view$/ : /svg#icon-heart-view$/
+    )
   })
 })
 
@@ -189,7 +191,7 @@ if (isBuild) {
     for (const file of listAssets('foo')) {
       if (file.endsWith('.css')) {
         expect(entry.css).toContain(`assets/${file}`)
-      } else if (!file.endsWith('.js')) {
+      } else if (!file.endsWith('.js') && !file.endsWith('.svg')) {
         expect(entry.assets).toContain(`assets/${file}`)
       }
     }

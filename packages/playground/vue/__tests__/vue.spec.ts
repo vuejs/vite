@@ -110,7 +110,9 @@ describe('asset reference', () => {
 
   test('svg fragment', async () => {
     const img = await page.$('.svg-frag')
-    expect(await img.getAttribute('src')).toMatch(/svg#icon-heart-view$/)
+    expect(await img.getAttribute('src')).toMatch(
+      isBuild ? /svg%3e#icon-heart-view$/ : /svg#icon-heart-view$/
+    )
   })
 
   test('relative url from <style>', async () => {

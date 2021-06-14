@@ -8,6 +8,7 @@ import { cleanUrl } from '../utils'
 import { FS_PREFIX } from '../constants'
 import { PluginContext, RenderedChunk } from 'rollup'
 import MagicString from 'magic-string'
+import svgToTinyDataUri from 'mini-svg-data-uri'
 import { createHash } from 'crypto'
 
 export const assetUrlRE = /__VITE_ASSET__([a-z\d]{8})__(?:\$_(.*?)__)?/g
@@ -208,12 +209,18 @@ async function fileToBuiltUrl(
 
   let url
   if (
-    config.build.lib ||
-    (!file.endsWith('.svg') &&
-      content.length < Number(config.build.assetsInlineLimit))
+    (config.build.lib ||
+      Buffer.byteLength(content) < config.build.assetsInlineLimit) &&
+    hash == null
   ) {
-    // base64 inlined as a string
-    url = `data:${mime.getType(file)};base64,${content.toString('base64')}`
+    // svgs can be inlined without base64
+    url = file.endsWith('.svg')
+      ? // The only difference between the default method and `toSrcset` is that
+        // the latter encodes spaces as `%20`, so it's safer to always use it
+        // to support `srcset` use-case even when svg is imported into JavaScript
+        svgToTinyDataUri.toSrcset(content.toString())
+      : // base64 inlined as a string
+        `data:${mime.getType(file)};base64,${content.toString('base64')}`
   } else {
     // emit as asset
     // rollup supports `import.meta.ROLLUP_FILE_URL_*`, but it generates code
