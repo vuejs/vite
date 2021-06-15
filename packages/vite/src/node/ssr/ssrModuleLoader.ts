@@ -77,6 +77,8 @@ async function instantiateModule(
     throw new Error(`failed to load module for ssr: ${url}`)
   }
 
+  urlStack = urlStack.concat(url)
+
   const ssrModule = {
     [Symbol.toStringTag]: 'Module'
   }
@@ -86,23 +88,28 @@ async function instantiateModule(
   // referenced before it's been instantiated.
   mod.ssrModule = ssrModule
 
-  // Store the parsed dependencies while this module is loading,
-  // so dependent modules can avoid waiting on a circular import.
-  pendingImports.set(url, new Set(result.deps))
-  urlStack = urlStack.concat(url)
-
   const isExternal = (dep: string) => dep[0] !== '.' && dep[0] !== '/'
 
-  await Promise.all(
-    result.deps!.map((dep) => {
-      if (!isExternal(dep)) {
-        const deps = pendingImports.get(dep)
-        if (!deps || !urlStack.some((url) => deps.has(url))) {
-          return ssrLoadModule(dep, server, context, urlStack)
-        }
-      }
-    })
-  )
+  if (result.deps?.length) {
+    // Store the parsed dependencies while this module is loading,
+    // so dependent modules can avoid waiting on a circular import.
+    pendingImports.set(url, new Set(result.deps))
+
+    // Load dependencies one at a time to ensure modules are
+    // instantiated in a predictable order.
+    await result.deps.reduce(
+      (queue, dep) =>
+        isExternal(dep)
+          ? queue
+          : queue.then(async () => {
+              const deps = pendingImports.get(dep)
+              if (!deps || !urlStack.some((url) => deps.has(url))) {
+                await ssrLoadModule(dep, server, context, urlStack)
+              }
+            }),
+      Promise.resolve()
+    )
+  }
 
   const ssrImportMeta = { url }
 
