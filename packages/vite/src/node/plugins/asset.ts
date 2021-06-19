@@ -228,10 +228,31 @@ async function fileToBuiltUrl(
     if (!map.has(contentHash)) {
       const basename = path.basename(file)
       const ext = path.extname(basename)
-      const fileName = path.posix.join(
+      let fileName = path.posix.join(
         config.build.assetsDir,
         `${basename.slice(0, -ext.length)}.${contentHash}${ext}`
       )
+
+      const { output } = config.build?.rollupOptions ?? {}
+      // Only the object format is currently considered here.
+      if (output && !Array.isArray(output)) {
+        const assetFileNames = output.assetFileNames
+        // e.g assetFileNames: dir/[name].[ext]
+        if (typeof assetFileNames === 'string') {
+          fileName = assetFileNames
+            .replace(/\[name\]/, basename.slice(0, -ext.length))
+            .replace(/\[ext\]/, ext.trimLeft('.'))
+            .replace(/\[hash\]/, getAssetHash(content))
+          // e.g assetFileNames: () => name
+        } else if (typeof assetFileNames === 'function') {
+          fileName = assetFileNames({
+            type: 'asset',
+            source: content,
+            name: fileName
+          })
+        }
+      }
+
       map.set(contentHash, fileName)
       pluginContext.emitFile({
         fileName,
