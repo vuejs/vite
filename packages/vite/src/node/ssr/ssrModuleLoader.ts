@@ -10,8 +10,7 @@ import {
   ssrImportMetaKey,
   ssrDynamicImportKey
 } from './ssrTransform'
-import { transformRequest, TransformResult } from '../server/transformRequest'
-import { ModuleNode } from '../server/moduleGraph'
+import { transformRequest } from '../server/transformRequest'
 
 interface SSRContext {
   global: NodeJS.Global
@@ -43,14 +42,6 @@ export async function ssrLoadModule(
   // request to that module are simply waiting on the same promise.
   const pending = pendingModules.get(url)
   if (pending) {
-    const { moduleGraph } = server
-    const mod = await moduleGraph.ensureEntryFromUrl(url)
-    const transformResult = await transformModule(mod, server)
-    const deps = (transformResult.deps || []).map((d) => unwrapId(d))
-    const circularDep = urlStack.find((u) => deps.includes(u))
-    if (circularDep) {
-      return {}
-    }
     return pending
   }
 
@@ -78,7 +69,13 @@ async function instantiateModule(
     return mod.ssrModule
   }
 
-  const result = await transformModule(mod, server)
+  const result =
+    mod.ssrTransformResult ||
+    (await transformRequest(url, server, { ssr: true }))
+  if (!result) {
+    // TODO more info? is this even necessary?
+    throw new Error(`failed to load module for ssr: ${url}`)
+  }
 
   urlStack = urlStack.concat(url)
 
@@ -86,8 +83,6 @@ async function instantiateModule(
     [Symbol.toStringTag]: 'Module'
   }
   Object.defineProperty(ssrModule, '__esModule', { value: true })
-  // Set immediately so the module is available in case of circular dependencies.
-  mod.ssrModule = ssrModule
 
   // Tolerate circular imports by ensuring the module can be
   // referenced before it's been instantiated.
@@ -213,25 +208,4 @@ function resolve(id: string, importer: string | null, root: string) {
   const resolved = resolveFrom(id, resolveDir, true)
   resolveCache.set(key, resolved)
   return resolved
-}
-
-const pendingTransforms = new Map<string, Promise<TransformResult | null>>()
-
-async function transformModule(mod: ModuleNode, server: ViteDevServer) {
-  const url = mod.url
-  let transformResult = mod.ssrTransformResult
-  if (!transformResult) {
-    let transformPromise = pendingTransforms.get(url)
-    if (!transformPromise) {
-      transformPromise = transformRequest(url, server, { ssr: true })
-      pendingTransforms.set(url, transformPromise)
-      transformPromise.catch(() => {}).then(() => pendingTransforms.delete(url))
-    }
-    transformResult = await transformPromise
-  }
-  if (!transformResult) {
-    // TODO more info? is this even necessary?
-    throw new Error(`failed to load module for ssr: ${url}`)
-  }
-  return transformResult
 }
