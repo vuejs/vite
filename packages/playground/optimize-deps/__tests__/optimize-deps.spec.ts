@@ -67,3 +67,7 @@ test('esbuild-plugin', async () => {
     isBuild ? `Hello from a package` : `Hello from an esbuild plugin`
   )
 })
+
+test('import from hidden dir', async () => {
+  expect(await page.textContent('.hidden-dir')).toBe('hello!')
+})

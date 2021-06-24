@@ -43,6 +43,9 @@
 <h2>Dep with changes from esbuild plugin</h2>
 <div>This should show a greeting: <span class="esbuild-plugin"></span></div>
 
+<h2>Dep from hidden dir</h2>
+<div>This should show hello!: <span class="hidden-dir"></span></div>
+
 <script type="module">
   // test dep detection in globbed files
   const globbed = import.meta.globEager('./glob/*.js')
@@ -70,4 +73,7 @@
 
   import { hello } from 'dep-esbuild-plugin-transform'
   document.querySelector('.esbuild-plugin').textContent = hello()
+
+  import { greeting } from './.hidden-dir/foo.js'
+  document.querySelector('.hidden-dir').textContent = greeting
 </script>
