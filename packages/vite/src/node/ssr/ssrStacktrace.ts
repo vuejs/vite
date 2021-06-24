@@ -1,58 +1,73 @@
+import { codeFrameColumns, SourceLocation } from '@babel/code-frame'
 import { SourceMapConsumer, RawSourceMap } from 'source-map'
 import { ModuleGraph } from '../server/moduleGraph'
+import fs from 'fs'
 
-let offset: number
-try {
-  new Function('throw new Error(1)')()
-} catch (e) {
-  // in Node 12, stack traces account for the function wrapper.
-  // in Node 13 and later, the function wrapper adds two lines,
-  // which must be subtracted to generate a valid mapping
-  const match = /:(\d+):\d+\)$/.exec(e.stack.split('\n')[1])
-  offset = match ? +match[1] - 1 : 0
-}
+const stackFrameRE = /^ {4}at (?:(.+?)\s+\()?(?:(.+?):(\d+)(?::(\d+))?)\)?/
 
 export function ssrRewriteStacktrace(
-  stack: string,
+  error: Error,
   moduleGraph: ModuleGraph
 ): string {
-  return stack
-    .split('\n')
-    .map((line) => {
-      return line.replace(
-        /^ {4}at (?:(.+?)\s+\()?(?:(.+?):(\d+)(?::(\d+))?)\)?/,
-        (input, varName, url, line, column) => {
-          if (!url) return input
+  let code!: string
+  let location: SourceLocation | undefined
 
-          const mod = moduleGraph.urlToModuleMap.get(url)
-          const rawSourceMap = mod?.ssrTransformResult?.map
+  const stackFrames = error
+    .stack!.split('\n')
+    .slice(error.message.split('\n').length)
+    .map((line, i) => {
+      return line.replace(stackFrameRE, (input, varName, url, line, column) => {
+        if (!url) return input
 
-          if (!rawSourceMap) {
-            return input
-          }
+        const mod = moduleGraph.urlToModuleMap.get(url)
+        const rawSourceMap = mod?.ssrTransformResult?.map
 
+        if (rawSourceMap) {
           const consumer = new SourceMapConsumer(
             rawSourceMap as any as RawSourceMap
           )
 
           const pos = consumer.originalPositionFor({
-            line: Number(line) - offset,
+            line: Number(line),
             column: Number(column),
-            bias: SourceMapConsumer.LEAST_UPPER_BOUND
+            bias: SourceMapConsumer.GREATEST_LOWER_BOUND
           })
 
-          if (!pos.source) {
-            return input
+          if (pos.source) {
+            url = pos.source
+            line = pos.line
+            column = pos.column
           }
+        }
 
-          const source = `${pos.source}:${pos.line || 0}:${pos.column || 0}`
+        if (i == 0 && fs.existsSync(url)) {
+          code = fs.readFileSync(url, 'utf8')
+          location = {
+            start: {
+              line: Number(line),
+              column: Number(column)
+            }
+          }
+        }
+
+        if (rawSourceMap) {
+          const source = `${url}:${line}:${column}`
           if (!varName || varName === 'eval') {
             return `    at ${source}`
           } else {
             return `    at ${varName} (${source})`
           }
         }
-      )
+        return input
+      })
     })
-    .join('\n')
+
+  const message = location
+    ? codeFrameColumns(code, location, {
+        highlightCode: true,
+        message: error.message
+      })
+    : error.message
+
+  return message + '\n\n' + stackFrames.join('\n')
 }

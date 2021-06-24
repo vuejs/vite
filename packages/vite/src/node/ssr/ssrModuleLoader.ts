@@ -1,5 +1,6 @@
 import fs from 'fs'
 import path from 'path'
+import * as convertSourceMap from 'convert-source-map'
 import { ViteDevServer } from '..'
 import { cleanUrl, resolveFrom, unwrapId } from '../utils'
 import { ssrRewriteStacktrace } from './ssrStacktrace'
@@ -11,6 +12,7 @@ import {
   ssrDynamicImportKey
 } from './ssrTransform'
 import { transformRequest } from '../server/transformRequest'
+import { injectSourcesContent } from '../server/sourcemap'
 
 interface SSRContext {
   global: NodeJS.Global
@@ -86,11 +88,11 @@ async function instantiateModule(
     })
   )
 
-  const ssrImportMeta = { url }
+  const { clearScreen, isProduction, logger, root } = server.config
 
   const ssrImport = (dep: string) => {
     if (isExternal(dep)) {
-      return nodeRequire(dep, mod.file, server.config.root)
+      return nodeRequire(dep, mod.file, root)
     } else {
       return moduleGraph.urlToModuleMap.get(unwrapId(dep))?.ssrModule
     }
@@ -98,7 +100,7 @@ async function instantiateModule(
 
   const ssrDynamicImport = (dep: string) => {
     if (isExternal(dep)) {
-      return Promise.resolve(nodeRequire(dep, mod.file, server.config.root))
+      return Promise.resolve(nodeRequire(dep, mod.file, root))
     } else {
       // #3087 dynamic import vars is ignored at rewrite import path,
       // so here need process relative path
@@ -123,32 +125,52 @@ async function instantiateModule(
     }
   }
 
+  const ssrImportMeta = { url }
+  const ssrArguments: Record<string, any> = {
+    global: context.global,
+    [ssrModuleExportsKey]: ssrModule,
+    [ssrImportMetaKey]: ssrImportMeta,
+    [ssrImportKey]: ssrImport,
+    [ssrDynamicImportKey]: ssrDynamicImport,
+    [ssrExportAllKey]: ssrExportAll
+  }
+
+  let ssrModuleImpl = isProduction
+    ? result.code + `\n//# sourceURL=${mod.url}`
+    : `(0,function(${Object.keys(ssrArguments)}){\n${result.code}\n})`
+
+  const { map } = result
+  if (map?.mappings) {
+    if (mod.file) {
+      await injectSourcesContent(map, mod.file, moduleGraph)
+    }
+
+    ssrModuleImpl += `\n` + convertSourceMap.fromObject(map).toComment()
+  }
+
   try {
-    new Function(
-      `global`,
-      ssrModuleExportsKey,
-      ssrImportMetaKey,
-      ssrImportKey,
-      ssrDynamicImportKey,
-      ssrExportAllKey,
-      result.code + `\n//# sourceURL=${mod.url}`
-    )(
-      context.global,
-      ssrModule,
-      ssrImportMeta,
-      ssrImport,
-      ssrDynamicImport,
-      ssrExportAll
-    )
+    let ssrModuleInit: Function
+    if (isProduction) {
+      // Use the faster `new Function` in production.
+      ssrModuleInit = new Function(...Object.keys(ssrArguments), ssrModuleImpl)
+    } else {
+      // Use the slower `vm.runInThisContext` for better sourcemap support.
+      const vm = require('vm') as typeof import('vm')
+      ssrModuleInit = vm.runInThisContext(ssrModuleImpl, {
+        filename: mod.file || mod.url,
+        columnOffset: 1,
+        displayErrors: false
+      })
+    }
+    ssrModuleInit(...Object.values(ssrArguments))
   } catch (e) {
-    e.stack = ssrRewriteStacktrace(e.stack, moduleGraph)
-    server.config.logger.error(
-      `Error when evaluating SSR module ${url}:\n${e.stack}`,
-      {
-        timestamp: true,
-        clear: server.config.clearScreen
-      }
-    )
+    try {
+      e.stack = ssrRewriteStacktrace(e, moduleGraph)
+    } catch {}
+    logger.error(`Error when evaluating SSR module ${url}:\n\n${e.stack}`, {
+      timestamp: true,
+      clear: clearScreen
+    })
     throw e
   }
 

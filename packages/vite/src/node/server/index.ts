@@ -361,7 +361,7 @@ export async function createServer(
     },
     ssrFixStacktrace(e) {
       if (e.stack) {
-        e.stack = ssrRewriteStacktrace(e.stack, moduleGraph)
+        e.stack = ssrRewriteStacktrace(e, moduleGraph)
       }
     },
     listen(port?: number, isRestart?: boolean) {
