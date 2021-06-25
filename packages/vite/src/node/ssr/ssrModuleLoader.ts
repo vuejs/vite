@@ -19,7 +19,7 @@ interface SSRContext {
 type SSRModule = Record<string, any>
 
 const pendingModules = new Map<string, Promise<SSRModule>>()
-const pendingImports = new Map<string, Set<string>>()
+const pendingImports = new Map<string, string>()
 
 export async function ssrLoadModule(
   url: string,
@@ -28,13 +28,6 @@ export async function ssrLoadModule(
   urlStack: string[] = []
 ): Promise<SSRModule> {
   url = unwrapId(url)
-
-  if (urlStack.includes(url)) {
-    server.config.logger.warn(
-      `Circular dependency: ${urlStack.join(' -> ')} -> ${url}`
-    )
-    return {}
-  }
 
   // when we instantiate multiple dependency modules in parallel, they may
   // point to shared modules. We need to avoid duplicate instantiation attempts
@@ -48,10 +41,11 @@ export async function ssrLoadModule(
   const modulePromise = instantiateModule(url, server, context, urlStack)
   pendingModules.set(url, modulePromise)
   modulePromise
-    .catch(() => {})
+    .catch(() => {
+      pendingImports.delete(url)
+    })
     .then(() => {
       pendingModules.delete(url)
-      pendingImports.delete(url)
     })
   return modulePromise
 }
@@ -90,48 +84,29 @@ async function instantiateModule(
 
   const isExternal = (dep: string) => dep[0] !== '.' && dep[0] !== '/'
 
-  if (result.deps?.length) {
-    // Store the parsed dependencies while this module is loading,
-    // so dependent modules can avoid waiting on a circular import.
-    pendingImports.set(url, new Set(result.deps))
-
-    // Load dependencies one at a time to ensure modules are
-    // instantiated in a predictable order.
-    await result.deps.reduce(
-      (queue, dep) =>
-        isExternal(dep)
-          ? queue
-          : queue.then(async () => {
-              const deps = pendingImports.get(dep)
-              if (!deps || !urlStack.some((url) => deps.has(url))) {
-                await ssrLoadModule(dep, server, context, urlStack)
-              }
-            }),
-      Promise.resolve()
-    )
-  }
-
   const ssrImportMeta = { url }
 
-  const ssrImport = (dep: string) => {
+  const ssrImport = async (dep: string) => {
     if (isExternal(dep)) {
       return nodeRequire(dep, mod.file, server.config.root)
-    } else {
-      return moduleGraph.urlToModuleMap.get(unwrapId(dep))?.ssrModule
     }
+    dep = unwrapId(dep)
+    const pendingImport = pendingImports.get(dep)
+    if (!pendingImport || !urlStack.includes(pendingImport)) {
+      pendingImports.set(url, dep)
+      await ssrLoadModule(dep, server, context, urlStack)
+      pendingImports.delete(url)
+    }
+    return moduleGraph.urlToModuleMap.get(dep)?.ssrModule
   }
 
   const ssrDynamicImport = (dep: string) => {
-    if (isExternal(dep)) {
-      return Promise.resolve(nodeRequire(dep, mod.file, server.config.root))
-    } else {
-      // #3087 dynamic import vars is ignored at rewrite import path,
-      // so here need process relative path
-      if (dep.startsWith('.')) {
-        dep = path.posix.resolve(path.dirname(url), dep)
-      }
-      return ssrLoadModule(dep, server, context, urlStack)
+    // #3087 dynamic import vars is ignored at rewrite import path,
+    // so here need process relative path
+    if (!isExternal(dep) && dep.startsWith('.')) {
+      dep = path.posix.resolve(path.dirname(url), dep)
     }
+    return ssrImport(dep)
   }
 
   function ssrExportAll(sourceModule: any) {
@@ -149,7 +124,8 @@ async function instantiateModule(
   }
 
   try {
-    new Function(
+    const AsyncFunction = async function () {}.constructor as typeof Function
+    const initModule = new AsyncFunction(
       `global`,
       ssrModuleExportsKey,
       ssrImportMetaKey,
@@ -157,7 +133,8 @@ async function instantiateModule(
       ssrDynamicImportKey,
       ssrExportAllKey,
       result.code + `\n//# sourceURL=${mod.url}`
-    )(
+    )
+    await initModule(
       context.global,
       ssrModule,
       ssrImportMeta,
