@@ -10,21 +10,17 @@ export async function injectSourcesContent(
       path.resolve(path.dirname(file), map.sourceRoot || '')
     )
   } catch (e) {
-    if (e.code == 'ENOENT') return
-    throw e
+    if (e.code !== 'ENOENT') throw e
+    var isVirtual = true
   }
   map.sourcesContent = []
   await Promise.all(
     map.sources.map(async (sourcePath, i) => {
-      try {
-        map.sourcesContent![i] = await fs.readFile(
-          path.resolve(sourceRoot, decodeURI(sourcePath)),
-          'utf-8'
-        )
-      } catch (e) {
-        if (e.code == 'ENOENT') return
-        throw e
+      sourcePath = decodeURI(sourcePath)
+      if (!isVirtual) {
+        sourcePath = path.resolve(sourceRoot, sourcePath)
       }
+      map.sourcesContent![i] = await fs.readFile(sourcePath, 'utf-8')
     })
   )
 }
