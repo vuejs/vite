@@ -1,4 +1,4 @@
-import { editFile, getColor, isBuild, untilUpdated } from '../../testUtils'
+import { editFile, untilUpdated } from '../../testUtils'
 import { port } from './serve'
 import fetch from 'node-fetch'
 
@@ -45,4 +45,11 @@ test('client navigation', async () => {
     code.replace('<h1>About', '<h1>changed')
   )
   await untilUpdated(() => page.textContent('h1'), 'changed')
+})
+
+test(`circular dependecies modules doesn't throw`, async () => {
+  await page.goto(url)
+  expect(await page.textContent('.circ-dep-init')).toMatch(
+    'circ-dep-init-a circ-dep-init-b'
+  )
 })

@@ -17,15 +17,40 @@ interface SSRContext {
 }
 
 type SSRModule = Record<string, any>
+type ImportsStack = string[]
 
 const pendingModules = new Map<string, Promise<SSRModule>>()
 const pendingImports = new Map<string, Set<string>>()
+const erroredModules = new Map<string, ImportsStack>()
 
-export async function ssrLoadModule(
+export { ssrLoadModuleAndRetryFailedModules as ssrLoadModule }
+async function ssrLoadModuleAndRetryFailedModules(
   url: string,
   server: ViteDevServer,
   context: SSRContext = { global },
-  urlStack: string[] = []
+  urlStack: ImportsStack = []
+): Promise<SSRModule> {
+  const mod = await ssrLoadModule(url, server, context, urlStack)
+  if (erroredModules.size) {
+    await retryFailedModules(server, context)
+  }
+  return mod
+}
+
+async function retryFailedModules(
+  server: ViteDevServer,
+  context: SSRContext = { global }
+) {
+  for (const [modToRetryUrl, modToRetryUrlStack] of erroredModules.entries()) {
+    await ssrLoadModule(modToRetryUrl, server, context, modToRetryUrlStack)
+  }
+}
+
+async function ssrLoadModule(
+  url: string,
+  server: ViteDevServer,
+  context: SSRContext = { global },
+  urlStack: ImportsStack = []
 ): Promise<SSRModule> {
   url = unwrapId(url)
 
@@ -47,26 +72,32 @@ export async function ssrLoadModule(
 
   const modulePromise = instantiateModule(url, server, context, urlStack)
   pendingModules.set(url, modulePromise)
-  modulePromise
-    .catch(() => {})
-    .then(() => {
-      pendingModules.delete(url)
-      pendingImports.delete(url)
-    })
-  return modulePromise
+
+  const result = modulePromise.then(([mod, err]) => {
+    if (err) {
+      erroredModules.set(url, urlStack)
+    } else {
+      erroredModules.delete(url)
+    }
+    pendingModules.delete(url)
+    pendingImports.delete(url)
+    return mod
+  })
+
+  return result
 }
 
 async function instantiateModule(
   url: string,
   server: ViteDevServer,
   context: SSRContext = { global },
-  urlStack: string[] = []
-): Promise<SSRModule> {
+  urlStack: ImportsStack = []
+): Promise<[SSRModule, Error?]> {
   const { moduleGraph } = server
   const mod = await moduleGraph.ensureEntryFromUrl(url)
 
-  if (mod.ssrModule) {
-    return mod.ssrModule
+  if (mod.ssrModule && !erroredModules.has(url)) {
+    return [mod.ssrModule]
   }
 
   const result =
@@ -79,14 +110,16 @@ async function instantiateModule(
 
   urlStack = urlStack.concat(url)
 
-  const ssrModule = {
-    [Symbol.toStringTag]: 'Module'
-  }
-  Object.defineProperty(ssrModule, '__esModule', { value: true })
+  if (!mod.ssrModule) {
+    const ssrModule = {
+      [Symbol.toStringTag]: 'Module'
+    }
+    Object.defineProperty(ssrModule, '__esModule', { value: true })
 
-  // Tolerate circular imports by ensuring the module can be
-  // referenced before it's been instantiated.
-  mod.ssrModule = ssrModule
+    // Tolerate circular imports by ensuring the module can be
+    // referenced before it's been instantiated.
+    mod.ssrModule = ssrModule
+  }
 
   const isExternal = (dep: string) => dep[0] !== '.' && dep[0] !== '/'
 
@@ -137,7 +170,7 @@ async function instantiateModule(
   function ssrExportAll(sourceModule: any) {
     for (const key in sourceModule) {
       if (key !== 'default') {
-        Object.defineProperty(ssrModule, key, {
+        Object.defineProperty(mod.ssrModule, key, {
           enumerable: true,
           configurable: true,
           get() {
@@ -159,7 +192,7 @@ async function instantiateModule(
       result.code + `\n//# sourceURL=${mod.url}`
     )(
       context.global,
-      ssrModule,
+      mod.ssrModule,
       ssrImportMeta,
       ssrImport,
       ssrDynamicImport,
@@ -175,10 +208,11 @@ async function instantiateModule(
         clear: server.config.clearScreen
       }
     )
-    throw e
+
+    return [mod.ssrModule, e]
   }
 
-  return Object.freeze(ssrModule)
+  return [Object.freeze(mod.ssrModule)]
 }
 
 function nodeRequire(id: string, importer: string | null, root: string) {
