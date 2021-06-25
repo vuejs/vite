@@ -20,7 +20,6 @@ import {
   normalizePath,
   fsPathFromId,
   ensureVolumeInPath,
-  resolveFrom,
   isDataUrl,
   cleanUrl,
   slash
@@ -29,6 +28,7 @@ import { ViteDevServer, SSRTarget } from '..'
 import { createFilter } from '@rollup/pluginutils'
 import { PartialResolvedId } from 'rollup'
 import { resolve as _resolveExports } from 'resolve.exports'
+import resolve from 'resolve'
 
 // special id for paths marked with browser: false
 // https://github.com/defunctzombie/package-browser-field-spec#ignore-a-module
@@ -375,7 +375,7 @@ export function tryNodeResolve(
     path.isAbsolute(importer) &&
     fs.existsSync(cleanUrl(importer))
   ) {
-    basedir = path.dirname(importer)
+    basedir = fs.realpathSync.native(path.dirname(importer))
   } else {
     basedir = root
   }
@@ -486,7 +486,10 @@ export function resolvePackageData(
     return packageCache.get(cacheKey)
   }
   try {
-    const pkgPath = resolveFrom(`${id}/package.json`, basedir)
+    const pkgPath = resolve.sync(`${id}/package.json`, {
+      basedir,
+      preserveSymlinks: true
+    })
     return loadPackageData(pkgPath, cacheKey)
   } catch (e) {
     isDebug && debug(`${chalk.red(`[failed loading package.json]`)} ${id}`)
