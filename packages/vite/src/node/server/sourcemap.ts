@@ -20,7 +20,13 @@ export async function injectSourcesContent(
       if (!isVirtual) {
         sourcePath = path.resolve(sourceRoot, sourcePath)
       }
-      map.sourcesContent![i] = await fs.readFile(sourcePath, 'utf-8')
+      try {
+        map.sourcesContent![i] = await fs.readFile(sourcePath, 'utf-8')
+      } catch (e) {
+        throw new Error(
+          `Sourcemap for "${file}" has a non-existent source: "${sourcePath}"`
+        )
+      }
     })
   )
 }
