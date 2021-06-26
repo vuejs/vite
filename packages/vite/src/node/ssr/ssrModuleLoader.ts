@@ -82,12 +82,10 @@ async function instantiateModule(
   // referenced before it's been instantiated.
   mod.ssrModule = ssrModule
 
-  const isExternal = (dep: string) => dep[0] !== '.' && dep[0] !== '/'
-
   const ssrImportMeta = { url }
 
   const ssrImport = async (dep: string) => {
-    if (isExternal(dep)) {
+    if (dep[0] !== '.' && dep[0] !== '/') {
       return nodeRequire(dep, mod.file, server.config.root)
     }
     dep = unwrapId(dep)
