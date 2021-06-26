@@ -103,7 +103,7 @@ async function instantiateModule(
   const ssrDynamicImport = (dep: string) => {
     // #3087 dynamic import vars is ignored at rewrite import path,
     // so here need process relative path
-    if (!isExternal(dep) && dep.startsWith('.')) {
+    if (dep[0] === '.') {
       dep = path.posix.resolve(path.dirname(url), dep)
     }
     return ssrImport(dep)
