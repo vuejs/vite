@@ -208,7 +208,10 @@ function resolveId(
 ) {
   const resolved = tryNodeResolve(id, importer, resolveOptions, false)
   if (!resolved) {
-    throw Error(`Cannot find module '${id}'`)
+    throw Error(
+      `Cannot find module '${id}'` +
+        (importer ? ` imported by '${importer}'` : ``)
+    )
   }
   return resolved.id
 }
