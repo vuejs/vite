@@ -34,6 +34,7 @@ export function resolveSSRExternal(
 
   const resolveOptions: InternalResolveOptions = {
     root,
+    preserveSymlinks: true,
     isProduction: false,
     isBuild: true
   }

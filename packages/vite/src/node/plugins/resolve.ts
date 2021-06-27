@@ -61,6 +61,7 @@ export interface InternalResolveOptions extends ResolveOptions {
   tryPrefix?: string
   preferRelative?: boolean
   isRequire?: boolean
+  preserveSymlinks?: boolean
 }
 
 export function resolvePlugin(baseOptions: InternalResolveOptions): Plugin {
@@ -380,7 +381,7 @@ export function tryNodeResolve(
     basedir = root
   }
 
-  const pkg = resolvePackageData(pkgId, basedir)
+  const pkg = resolvePackageData(pkgId, basedir, options.preserveSymlinks)
 
   if (!pkg) {
     return
@@ -479,7 +480,8 @@ const packageCache = new Map<string, PackageData>()
 
 export function resolvePackageData(
   id: string,
-  basedir: string
+  basedir: string,
+  preserveSymlinks = false
 ): PackageData | undefined {
   const cacheKey = id + basedir
   if (packageCache.has(cacheKey)) {
@@ -488,7 +490,7 @@ export function resolvePackageData(
   try {
     const pkgPath = resolve.sync(`${id}/package.json`, {
       basedir,
-      preserveSymlinks: true
+      preserveSymlinks
     })
     return loadPackageData(pkgPath, cacheKey)
   } catch (e) {
