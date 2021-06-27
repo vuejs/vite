@@ -11,6 +11,7 @@ import {
 } from './ssrTransform'
 import { transformRequest } from '../server/transformRequest'
 import { InternalResolveOptions, tryNodeResolve } from '../plugins/resolve'
+import { dedupeRequire } from '../plugins/ssrRequireHook'
 
 interface SSRContext {
   global: NodeJS.Global
@@ -181,8 +182,19 @@ function nodeRequire(
   if (!resolved) {
     throw Error(`Cannot find module '${id}'`)
   }
-  const mod = require(resolved.id)
+
+  const unhookRequire = resolveOptions.dedupe?.length
+    ? dedupeRequire(resolveOptions.dedupe, module)
+    : null
+
+  try {
+    var mod = require(resolved.id)
+  } finally {
+    unhookRequire?.()
+  }
+
   const defaultExport = mod.__esModule ? mod.default : mod
+
   // rollup-style default import interop for cjs
   return new Proxy(mod, {
     get(mod, prop) {
