@@ -94,7 +94,7 @@ async function instantiateModule(
       return nodeRequire(dep, mod.file, server.config.root)
     }
     dep = unwrapId(dep)
-    if (!pendingImports.get(dep)?.some(isCircular)) {
+    if (!isCircular(dep) && !pendingImports.get(dep)?.some(isCircular)) {
       pendingDeps.push(dep)
       if (pendingDeps.length == 1) {
         pendingImports.set(url, pendingDeps)
