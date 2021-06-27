@@ -1,4 +1,5 @@
 import path from 'path'
+import { Module } from 'module'
 import { ViteDevServer } from '..'
 import { unwrapId } from '../utils'
 import { ssrRewriteStacktrace } from './ssrStacktrace'
@@ -11,7 +12,7 @@ import {
 } from './ssrTransform'
 import { transformRequest } from '../server/transformRequest'
 import { InternalResolveOptions, tryNodeResolve } from '../plugins/resolve'
-import { dedupeRequire } from '../plugins/ssrRequireHook'
+import { hookNodeResolve } from '../plugins/ssrRequireHook'
 
 interface SSRContext {
   global: NodeJS.Global
@@ -178,28 +179,36 @@ function nodeRequire(
   importer: string | null,
   resolveOptions: InternalResolveOptions
 ) {
-  const resolved = tryNodeResolve(id, importer, resolveOptions, false)
-  if (!resolved) {
-    throw Error(`Cannot find module '${id}'`)
-  }
+  id = resolveId(id, importer, resolveOptions)
 
-  const unhookRequire = resolveOptions.dedupe?.length
-    ? dedupeRequire(resolveOptions.dedupe, module)
-    : null
-
+  const loadModule = importer ? Module.createRequire(importer) : require
+  const unhookNodeResolve = hookNodeResolve((id, importer) =>
+    resolveId(id, importer.id, resolveOptions)
+  )
   try {
-    var mod = require(resolved.id)
+    var mod = loadModule(id)
   } finally {
-    unhookRequire?.()
+    unhookNodeResolve()
   }
-
-  const defaultExport = mod.__esModule ? mod.default : mod
 
   // rollup-style default import interop for cjs
+  const defaultExport = mod.__esModule ? mod.default : mod
   return new Proxy(mod, {
     get(mod, prop) {
       if (prop === 'default') return defaultExport
       return mod[prop]
     }
   })
+}
+
+function resolveId(
+  id: string,
+  importer: string | null,
+  resolveOptions: InternalResolveOptions
+) {
+  const resolved = tryNodeResolve(id, importer, resolveOptions, false)
+  if (!resolved) {
+    throw Error(`Cannot find module '${id}'`)
+  }
+  return resolved.id
 }
