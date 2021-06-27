@@ -179,12 +179,15 @@ function nodeRequire(
   importer: string | null,
   resolveOptions: InternalResolveOptions
 ) {
-  id = resolveId(id, importer, resolveOptions)
+  const unhookNodeResolve = hookNodeResolve((id, parent) => {
+    const resolved = tryNodeResolve(id, parent.id, resolveOptions, false)
+    if (!resolved) {
+      throw Error(`Cannot find module '${id}' imported from '${parent.id}'`)
+    }
+    return resolved.id
+  })
 
-  const loadModule = importer ? Module.createRequire(importer) : require
-  const unhookNodeResolve = hookNodeResolve((id, importer) =>
-    resolveId(id, importer.id, resolveOptions)
-  )
+  const loadModule = Module.createRequire(importer || resolveOptions.root + '/')
   try {
     var mod = loadModule(id)
   } finally {
@@ -199,19 +202,4 @@ function nodeRequire(
       return mod[prop]
     }
   })
-}
-
-function resolveId(
-  id: string,
-  importer: string | null,
-  resolveOptions: InternalResolveOptions
-) {
-  const resolved = tryNodeResolve(id, importer, resolveOptions, false)
-  if (!resolved) {
-    throw Error(
-      `Cannot find module '${id}'` +
-        (importer ? ` imported by '${importer}'` : ``)
-    )
-  }
-  return resolved.id
 }
