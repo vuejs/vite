@@ -19,7 +19,7 @@ interface SSRContext {
 type SSRModule = Record<string, any>
 
 const pendingModules = new Map<string, Promise<SSRModule>>()
-const pendingImports = new Map<string, string>()
+const pendingImports = new Map<string, string[]>()
 
 export async function ssrLoadModule(
   url: string,
@@ -71,8 +71,6 @@ async function instantiateModule(
     throw new Error(`failed to load module for ssr: ${url}`)
   }
 
-  urlStack = urlStack.concat(url)
-
   const ssrModule = {
     [Symbol.toStringTag]: 'Module'
   }
@@ -84,16 +82,29 @@ async function instantiateModule(
 
   const ssrImportMeta = { url }
 
+  urlStack = urlStack.concat(url)
+  const isCircular = (url: string) => urlStack.includes(url)
+
+  // Since dynamic imports can happen in parallel, we need to
+  // account for multiple pending deps and duplicate imports.
+  const pendingDeps: string[] = []
+
   const ssrImport = async (dep: string) => {
     if (dep[0] !== '.' && dep[0] !== '/') {
       return nodeRequire(dep, mod.file, server.config.root)
     }
     dep = unwrapId(dep)
-    const pendingImport = pendingImports.get(dep)
-    if (!pendingImport || !urlStack.includes(pendingImport)) {
-      pendingImports.set(url, dep)
+    if (!pendingImports.get(dep)?.some(isCircular)) {
+      pendingDeps.push(dep)
+      if (pendingDeps.length == 1) {
+        pendingImports.set(url, pendingDeps)
+      }
       await ssrLoadModule(dep, server, context, urlStack)
-      pendingImports.delete(url)
+      if (pendingDeps.length == 1) {
+        pendingImports.delete(url)
+      } else {
+        pendingDeps.splice(pendingDeps.indexOf(dep), 1)
+      }
     }
     return moduleGraph.urlToModuleMap.get(dep)?.ssrModule
   }
