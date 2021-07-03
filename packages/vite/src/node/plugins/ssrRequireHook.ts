@@ -52,11 +52,13 @@ function dedupeRequire(dedupe: string[]) {
   }
 }
 
-export function hookNodeResolve(resolver: NodeResolveFilename) {
+export function hookNodeResolve(
+  getResolver: (resolveFilename: NodeResolveFilename) => NodeResolveFilename
+): () => void {
   const Module = require('module') as { _resolveFilename: NodeResolveFilename }
-  const resolveFilename = Module._resolveFilename
-  Module._resolveFilename = resolver
+  const prevResolver = Module._resolveFilename
+  Module._resolveFilename = getResolver(prevResolver)
   return () => {
-    Module._resolveFilename = resolveFilename
+    Module._resolveFilename = prevResolver
   }
 }
