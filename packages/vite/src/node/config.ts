@@ -95,6 +95,11 @@ export interface UserConfig {
    */
   cacheDir?: string
   /**
+   * Save source code transformations on disk
+   * @default false
+   */
+  cacheTransformations?: boolean
+  /**
    * Explicitly set a mode to run in. This will override the default mode for
    * each command, and can be overridden by the command line --mode option.
    */
