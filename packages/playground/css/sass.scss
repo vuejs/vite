@@ -2,7 +2,7 @@
 @import '@/nested/partial'; // sass convention: omitting leading _ for partials
 @import 'css-dep'; // package w/ sass entry points
 @import 'virtual-dep'; // virtual file added through importer
-
+@import '@/pkg-dep'; // package w/out sass field
 
 .sass {
   /* injected via vite.config.js */

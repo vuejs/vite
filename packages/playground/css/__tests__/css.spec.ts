@@ -177,6 +177,10 @@ test('@import dependency w/ stylus entry', async () => {
   expect(await getColor('.css-dep-stylus')).toBe('red')
 })
 
+test('@import dependency w/out package scss', async () => {
+  expect(await getColor('.sass-dep')).toBe('lavender')
+})
+
 test('async chunk', async () => {
   const el = await page.$('.async')
   expect(await getColor(el)).toBe('teal')
