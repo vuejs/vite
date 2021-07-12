@@ -245,11 +245,13 @@ export function buildImportAnalysisPlugin(config: ResolvedConfig): Plugin {
                   analyzed.add(filename)
                   const chunk = bundle[filename] as OutputChunk | undefined
                   if (chunk) {
-                    deps.add(config.base + chunk.fileName)
+                    // use a relative path https://github.com/vitejs/vite/pull/3061
+                    deps.add('./' + chunk.fileName)
                     const cssFiles = chunkToEmittedCssFileMap.get(chunk)
                     if (cssFiles) {
                       cssFiles.forEach((file) => {
-                        deps.add(config.base + file)
+                        // use a relative path https://github.com/vitejs/vite/pull/3061
+                        deps.add('./' + file)
                       })
                     }
                     chunk.imports.forEach(addDeps)
