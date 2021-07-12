@@ -64,6 +64,12 @@ export interface BuildOptions {
    */
   target?: 'modules' | TransformOptions['target'] | false
   /**
+   * whether to inject module preload polyfill.
+   * Note: does not apply to library mode.
+   * @default true
+   */
+  polyfillModulePreload?: boolean
+  /**
    * whether to inject dynamic import polyfill.
    * Note: does not apply to library mode.
    * @default false
@@ -208,6 +214,7 @@ export type ResolvedBuildOptions = Required<Omit<BuildOptions, 'base'>>
 export function resolveBuildOptions(raw?: BuildOptions): ResolvedBuildOptions {
   const resolved: ResolvedBuildOptions = {
     target: 'modules',
+    polyfillModulePreload: true,
     polyfillDynamicImport: false,
     outDir: 'dist',
     assetsDir: 'assets',

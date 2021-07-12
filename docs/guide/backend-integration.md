@@ -27,6 +27,13 @@ Or you can follow these steps to configure it manually:
    import 'vite/dynamic-import-polyfill'
    ```
 
+   If you haven't disabled the [module preload polyfill](/config/#polyfillmodulepreload), you also need to import the polyfill in your entry
+
+   ```js
+   // add the beginning of your app entry
+   import 'vite/modulepreload-polyfill'
+   ```
+
 2. For development, inject the following in your server's HTML template (substitute `http://localhost:3000` with the local URL Vite is running at):
 
    ```html

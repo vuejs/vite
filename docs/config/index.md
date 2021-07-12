@@ -543,6 +543,21 @@ createServer()
 
   Note the build will fail if the code contains features that cannot be safely transpiled by esbuild. See [esbuild docs](https://esbuild.github.io/content-types/#javascript) for more details.
 
+### build.polyfillModulePreload
+
+- **Type:** `boolean`
+- **Default:** `true`
+
+  Whether to automatically inject [module preload polyfill](https://guybedford.com/es-module-preloading-integrity#modulepreload-polyfill).
+
+  If set to true, the polyfill is auto injected into the proxy module of each `index.html` entry. If the build is configured to use a non-html custom entry via `build.rollupOptions.input`, then it is necessary to manually import the polyfill in your custom entry:
+
+  ```js
+  import 'vite/modulepreload-polyfill'
+  ```
+
+  Note: the polyfill does **not** apply to [Library Mode](/guide/build#library-mode). If you need to support browsers without native dynamic import, you should probably avoid using it in your library.
+
 ### build.polyfillDynamicImport
 
 - **Type:** `boolean`

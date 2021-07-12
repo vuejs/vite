@@ -17,28 +17,27 @@ export const preloadMethod = `__vitePreload`
 export const preloadMarker = `__VITE_PRELOAD__`
 
 const preloadHelperId = 'vite/preload-helper'
-const preloadCode = `let scriptRel;const seen = {};export const ${preloadMethod} = ${preload.toString()}`
 const preloadMarkerRE = new RegExp(`"${preloadMarker}"`, 'g')
 
 /**
  * Helper for preloading CSS and direct imports of async chunks in parallel to
  * the async chunk itself.
  */
+
+function detectScriptRel() {
+  // @ts-ignore
+  const relList = document.createElement('link').relList
+  // @ts-ignore
+  return relList && relList.supports && relList.supports('modulepreload')
+    ? 'modulepreload'
+    : 'preload'
+}
+
+declare const scriptRel: string
 function preload(baseModule: () => Promise<{}>, deps?: string[]) {
   // @ts-ignore
   if (!__VITE_IS_MODERN__ || !deps || deps.length === 0) {
     return baseModule()
-  }
-
-  // @ts-ignore
-  if (scriptRel === undefined) {
-    // @ts-ignore
-    const relList = document.createElement('link').relList
-    // @ts-ignore
-    scriptRel =
-      relList && relList.supports && relList.supports('modulepreload')
-        ? 'modulepreload'
-        : 'preload'
   }
 
   return Promise.all(
@@ -79,6 +78,11 @@ function preload(baseModule: () => Promise<{}>, deps?: string[]) {
  */
 export function buildImportAnalysisPlugin(config: ResolvedConfig): Plugin {
   const ssr = !!config.build.ssr
+
+  const scriptRel = config.build.polyfillModulePreload
+    ? `'modulepreload'`
+    : `(${detectScriptRel.toString()})()`
+  const preloadCode = `const scriptRel = ${scriptRel};const seen = {};export const ${preloadMethod} = ${preload.toString()}`
 
   return {
     name: 'vite:import-analysis',

@@ -3,7 +3,7 @@ import { Plugin } from '../plugin'
 import { isModernFlag } from './importAnalysisBuild'
 import path from 'path'
 
-export const polyfillId = 'vite/dynamic-import-polyfill'
+export const dynamicImportPolyfillId = 'vite/dynamic-import-polyfill'
 
 function resolveModulePath(config: ResolvedConfig) {
   const {
@@ -25,12 +25,12 @@ export function dynamicImportPolyfillPlugin(config: ResolvedConfig): Plugin {
   return {
     name: 'vite:dynamic-import-polyfill',
     resolveId(id) {
-      if (id === polyfillId) {
+      if (id === dynamicImportPolyfillId) {
         return id
       }
     },
     load(id) {
-      if (id === polyfillId) {
+      if (id === dynamicImportPolyfillId) {
         if (!enabled && config.command === 'build') {
           config.logger.warnOnce(
             `\n'vite/dynamic-import-polyfill' is no longer needed if you target modern browsers`
@@ -58,7 +58,7 @@ export function dynamicImportPolyfillPlugin(config: ResolvedConfig): Plugin {
         throw new Error(
           `Vite's dynamic import polyfill is enabled but was never imported. This ` +
             `should only happen when using custom non-html rollup inputs. Make ` +
-            `sure to add \`import "${polyfillId}"\` as the first statement in ` +
+            `sure to add \`import "${dynamicImportPolyfillId}"\` as the first statement in ` +
             `your custom entry.`
         )
       }

@@ -11,6 +11,7 @@ import { clientInjectionsPlugin } from './clientInjections'
 import { htmlInlineScriptProxyPlugin } from './html'
 import { wasmPlugin } from './wasm'
 import { dynamicImportPolyfillPlugin } from './dynamicImportPolyfill'
+import { modulePreloadPolyfillPlugin } from './modulePreloadPolyfill'
 import { webWorkerPlugin } from './worker'
 import { preAliasPlugin } from './preAlias'
 import { definePlugin } from './define'
@@ -31,6 +32,9 @@ export async function resolvePlugins(
     isBuild ? null : preAliasPlugin(),
     aliasPlugin({ entries: config.resolve.alias }),
     ...prePlugins,
+    config.build.polyfillModulePreload
+      ? modulePreloadPolyfillPlugin(config)
+      : null,
     dynamicImportPolyfillPlugin(config),
     resolvePlugin({
       ...config.resolve,
