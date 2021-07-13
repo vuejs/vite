@@ -80,6 +80,9 @@ describe('optimizer-scan:script-test', () => {
       `import foo from 'vue';//comment`,
       `import foo from 'vue';/*comment
       */`
+      // Skipped, false negatives with current regex
+      // `import typescript from 'typescript'`,
+      // import type, {foo} from 'vue'
     ]
 
     shouldMatchArray.forEach((str) => {
@@ -90,7 +93,10 @@ describe('optimizer-scan:script-test', () => {
     const shouldFailArray = [
       `testMultiline("import", {
         body: "ok" });`,
-      `import type, {foo} from 'vue'`
+      `//;import foo from 'vue'`,
+      `import type { Bar } from 'foo'`,
+      `import type{ Bar } from 'foo'`,
+      `import type Bar from 'foo'`
     ]
     shouldFailArray.forEach((str) => {
       expect(importsRE.test(str)).toBe(false)
