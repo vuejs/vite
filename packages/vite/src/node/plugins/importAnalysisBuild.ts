@@ -145,17 +145,17 @@ export function buildImportAnalysisPlugin(config: ResolvedConfig): Plugin {
               index,
               config.root,
               undefined,
-              ssr
+              !ssr && config.build.autoPreload
             )
           str().prepend(importsString)
           str().overwrite(expStart, endIndex, exp)
-          if (!isEager) {
+          if (!isEager && config.build.autoPreload) {
             needPreloadHelper = true
           }
           continue
         }
 
-        if (dynamicIndex > -1 && !ssr) {
+        if (dynamicIndex > -1 && !ssr && config.build.autoPreload) {
           needPreloadHelper = true
           const dynamicEnd = source.indexOf(`)`, end) + 1
           const original = source.slice(dynamicIndex, dynamicEnd)

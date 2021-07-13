@@ -560,6 +560,13 @@ createServer()
 
   Note: the polyfill does **not** apply to [Library Mode](/guide/build#library-mode). If you need to support browsers without native dynamic import, you should probably avoid using it in your library.
 
+### build.autoPreload
+
+- **Type:** `boolean`
+- **Default:** `true`
+
+  whether to inject `__vitePreload` helper method.
+
 ### build.outDir
 
 - **Type:** `string`
