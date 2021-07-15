@@ -105,10 +105,10 @@ export default function ({ types: t }: typeof babel): babel.PluginObj {
       t.isCallExpression(node) &&
       t.isIdentifier(node.callee, { name: '_extends' })
     ) {
-      const props = node.arguments.map(getJSXProps)
+      const props: any[] = node.arguments.map(getJSXProps)
       //if calling this recursively works, flatten.
       if (props.every((prop) => prop !== null)) {
-        return [].concat.apply([], props as any[])
+        return [].concat(...props)
       }
     }
 
