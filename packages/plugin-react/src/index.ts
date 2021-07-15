@@ -40,7 +40,7 @@ export default function viteReact(opts: Options = {}): PluginOption[] {
   let projectRoot = process.cwd()
   let isProduction = true
   let skipFastRefresh = opts.fastRefresh === false
-  let filter
+  let filter = createFilter(opts.include, opts.exclude)
 
   const userPlugins = opts.babel?.plugins || []
   const userParserPlugins =
