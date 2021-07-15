@@ -77,10 +77,10 @@ export default function viteReact(opts: Options = {}): PluginOption[] {
         const isNodeModules = id.includes('node_modules')
         if (!isNodeModules && !isProduction) {
           plugins.push(
-            await interopDefault<babel.PluginItem>(
+            await interopDefault(
               import('@babel/plugin-transform-react-jsx-self')
             ),
-            await interopDefault<babel.PluginItem>(
+            await interopDefault(
               import('@babel/plugin-transform-react-jsx-source')
             )
           )
@@ -253,6 +253,6 @@ export default function viteReact(opts: Options = {}): PluginOption[] {
 
 viteReact.preambleCode = preambleCode
 
-function interopDefault<T>(promise: Promise<T & { default?: T }>): Promise<T> {
+function interopDefault(promise: Promise<any>): Promise<any> {
   return promise.then((module) => module.default || module)
 }
