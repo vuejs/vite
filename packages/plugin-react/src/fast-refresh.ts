@@ -100,7 +100,7 @@ export function isRefreshBoundary(ast: t.File): boolean {
   })
 }
 
-function isComponentLikeIdentifier(node: t.Node): node is t.Identifier {
+function isComponentLikeIdentifier(node: t.Node): boolean {
   return node.type === 'Identifier' && isComponentLikeName(node.name)
 }
 

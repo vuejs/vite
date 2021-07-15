@@ -2,7 +2,6 @@
  * https://github.com/flying-sheep/babel-plugin-transform-react-createelement-to-jsx
  * @license GNU General Public License v3.0
  */
-import type { types as t } from '@babel/core'
 import * as babel from '@babel/core'
 
 /**
@@ -23,7 +22,7 @@ export default function ({ types: t }: typeof babel): babel.PluginObj {
    * Get a `JSXElement` from a `CallExpression`.
    * Returns `null` if this impossible.
    */
-  function getJSXNode(node: t.Node): t.JSXElement | t.JSXFragment | null {
+  function getJSXNode(node: any): any {
     if (!isReactCreateElement(node)) {
       return null
     }
@@ -61,11 +60,7 @@ export default function ({ types: t }: typeof babel): babel.PluginObj {
 
     // self-closing tag if no children
     const selfClosing = children.length === 0
-    const startTag = t.jsxOpeningElement(
-      name,
-      props as (t.JSXAttribute | t.JSXSpreadAttribute)[],
-      selfClosing
-    )
+    const startTag = t.jsxOpeningElement(name, props, selfClosing)
     const endTag = selfClosing ? null : t.jsxClosingElement(name)
 
     return t.jsxElement(startTag, endTag, children, selfClosing)
@@ -75,9 +70,7 @@ export default function ({ types: t }: typeof babel): babel.PluginObj {
    * Get a JSXIdentifier or JSXMemberExpression from a Node of known type.
    * Returns null if a unknown node type, null or undefined is passed.
    */
-  function getJSXName(
-    node: t.Node
-  ): t.JSXMemberExpression | t.JSXIdentifier | null {
+  function getJSXName(node: any): any {
     if (node == null) {
       return null
     }
@@ -95,7 +88,7 @@ export default function ({ types: t }: typeof babel): babel.PluginObj {
     if (object === null || property === null) {
       return null
     }
-    return t.jsxMemberExpression(object, property as t.JSXIdentifier)
+    return t.jsxMemberExpression(object, property)
   }
 
   /**
@@ -103,7 +96,7 @@ export default function ({ types: t }: typeof babel): babel.PluginObj {
    * Handles the _extends Expression babel creates from SpreadElement nodes.
    * Returns null if a validation error occurs.
    */
-  function getJSXProps(node: t.Node): t.Node[] | null {
+  function getJSXProps(node: any): any[] | null {
     if (node == null || isNullLikeNode(node)) {
       return []
     }
@@ -115,7 +108,7 @@ export default function ({ types: t }: typeof babel): babel.PluginObj {
       const props = node.arguments.map(getJSXProps)
       //if calling this recursively works, flatten.
       if (props.every((prop) => prop !== null)) {
-        return props as unknown as t.Node[]
+        return props
       }
     }
 
@@ -135,14 +128,7 @@ export default function ({ types: t }: typeof babel): babel.PluginObj {
     )
   }
 
-  function getJSXChild(
-    node: t.Node
-  ):
-    | t.JSXText
-    | t.JSXElement
-    | t.JSXFragment
-    | t.JSXExpressionContainer
-    | null {
+  function getJSXChild(node: any) {
     if (t.isStringLiteral(node)) {
       return t.jsxText(node.value)
     }
@@ -155,26 +141,17 @@ export default function ({ types: t }: typeof babel): babel.PluginObj {
     return null
   }
 
-  function getJSXChildren(
-    nodes: t.Node[]
-  ):
-    | (t.JSXElement | t.JSXFragment | t.JSXExpressionContainer | t.JSXText)[]
-    | null {
+  function getJSXChildren(nodes: any[]) {
     const children = nodes
       .filter((node) => !isNullLikeNode(node))
       .map(getJSXChild)
     if (children.some((child) => child == null)) {
       return null
     }
-    return children as unknown as (
-      | t.JSXElement
-      | t.JSXFragment
-      | t.JSXExpressionContainer
-      | t.JSXText
-    )[]
+    return children
   }
 
-  function getJSXIdentifier(node: t.Node): t.JSXIdentifier | null {
+  function getJSXIdentifier(node: any) {
     //TODO: JSXNamespacedName
     if (t.isIdentifier(node)) {
       return t.jsxIdentifier(node.name)
@@ -185,9 +162,7 @@ export default function ({ types: t }: typeof babel): babel.PluginObj {
     return null
   }
 
-  function getJSXAttributeValue(
-    node: t.Node
-  ): t.StringLiteral | t.JSXElement | t.JSXExpressionContainer | null {
+  function getJSXAttributeValue(node: any) {
     if (t.isStringLiteral(node)) {
       return node
     }
@@ -203,7 +178,7 @@ export default function ({ types: t }: typeof babel): babel.PluginObj {
   /**
    * Tests if a node is a CallExpression with callee `React.createElement`
    */
-  const isReactCreateElement = (node: t.Node): node is t.CallExpression =>
+  const isReactCreateElement = (node: any) =>
     t.isCallExpression(node) &&
     t.isMemberExpression(node.callee) &&
     t.isIdentifier(node.callee.object, { name: 'React' }) &&
@@ -213,13 +188,13 @@ export default function ({ types: t }: typeof babel): babel.PluginObj {
   /**
    * Tests if a node is `null` or `undefined`
    */
-  const isNullLikeNode = (node: t.Node): node is t.NullLiteral | t.Identifier =>
+  const isNullLikeNode = (node: any) =>
     t.isNullLiteral(node) || t.isIdentifier(node, { name: 'undefined' })
 
   /**
    * Tests if a node is an object expression with noncomputed, nonmethod attrs
    */
-  const isPlainObjectExpression = (node: t.Node): node is t.ObjectExpression =>
+  const isPlainObjectExpression = (node: any) =>
     t.isObjectExpression(node) &&
     node.properties.every(
       (property) =>
