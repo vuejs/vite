@@ -52,8 +52,11 @@ export async function preview(
   const protocol = options.https ? 'https' : 'http'
   const logger = config.logger
   const base = config.base
+  const socket = options.socket
 
-  httpServer.listen(port, hostname.host, () => {
+  const listenOption = socket ?? { port, host: hostname }
+
+  httpServer.listen(listenOption, () => {
     logger.info(
       chalk.cyan(`\n  vite v${require('vite/package.json').version}`) +
         chalk.green(` build preview server running at:\n`)

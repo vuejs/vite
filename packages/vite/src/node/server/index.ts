@@ -59,6 +59,7 @@ import { searchForWorkspaceRoot } from './searchRoot'
 import { CLIENT_DIR } from '../constants'
 
 export interface ServerOptions {
+  socket?: string
   host?: string | boolean
   port?: number
   /**
@@ -259,7 +260,10 @@ export interface ViteDevServer {
   /**
    * Start the server.
    */
-  listen(port?: number, isRestart?: boolean): Promise<ViteDevServer>
+  listen(
+    listenOption?: ListenOption,
+    isRestart?: boolean
+  ): Promise<ViteDevServer>
   /**
    * Stop the server.
    */
@@ -373,8 +377,8 @@ export async function createServer(
         rebindErrorStacktrace(e, stacktrace)
       }
     },
-    listen(port?: number, isRestart?: boolean) {
-      return startServer(server, port, isRestart)
+    listen(listenOption?: ListenOption, isRestart?: boolean) {
+      return startServer(server, listenOption, isRestart)
     },
     async close() {
       process.off('SIGTERM', exitProcess)
@@ -576,9 +580,11 @@ export async function createServer(
   return server
 }
 
+export type ListenOption = number | { port: number; socket: string }
+
 async function startServer(
   server: ViteDevServer,
-  inlinePort?: number,
+  inlineListenOption?: ListenOption,
   isRestart: boolean = false
 ): Promise<ViteDevServer> {
   const httpServer = server.httpServer
@@ -587,19 +593,38 @@ async function startServer(
   }
 
   const options = server.config.server
-  let port = inlinePort || options.port || 3000
-  const hostname = resolveHostname(options.host)
+  const inlinePort =
+    typeof inlineListenOption === 'number'
+      ? inlineListenOption
+      : inlineListenOption?.port
+  const inlineSocket =
+    typeof inlineListenOption === 'object'
+      ? inlineListenOption.socket
+      : undefined
+  let port = inlinePort || options?.port || 3000
+  const socket = inlineSocket || options?.socket
+  const hostname = resolveHostname(options?.host)
 
-  const protocol = options.https ? 'https' : 'http'
+  const protocol = options?.https ? 'https' : 'http'
   const info = server.config.logger.info
   const base = server.config.base
+
+  const listenOption = socket ? socket : { port, host: hostname }
 
   return new Promise((resolve, reject) => {
     const onError = (e: Error & { code?: string }) => {
       if (e.code === 'EADDRINUSE') {
-        if (options.strictPort) {
+        if (options?.strictPort || socket) {
           httpServer.removeListener('error', onError)
-          reject(new Error(`Port ${port} is already in use`))
+          if (socket) {
+            reject(
+              new Error(
+                `Socket ${socket} already existed. Stop the process that is using this socket, or manually remove this socket.`
+              )
+            )
+          } else {
+            reject(new Error(`Port ${port} is already in use`))
+          }
         } else {
           info(`Port ${port} is in use, trying another one...`)
           httpServer.listen(++port, hostname.host)
@@ -612,7 +637,7 @@ async function startServer(
 
     httpServer.on('error', onError)
 
-    httpServer.listen(port, hostname.host, () => {
+    httpServer.listen(listenOption, () => {
       httpServer.removeListener('error', onError)
 
       info(
@@ -622,6 +647,26 @@ async function startServer(
           clear: !server.config.logger.hasWarned
         }
       )
+
+      if (socket) {
+        info(`  > Socket: ${chalk.cyan(socket)}`)
+        ;[
+          `SIGINT`,
+          `SIGUSR1`,
+          `SIGUSR2`,
+          /*`uncaughtException`,*/ `SIGTERM`
+        ].forEach((eventType) => {
+          process.on(eventType, () => {
+            info(`Exiting with event type ${eventType}`)
+            process.exit()
+          })
+        })
+
+        process.on('exit', () => {
+          fs.unlinkSync(socket)
+          info(`Socket has been cleaned up for exit`)
+        })
+      }
 
       printServerUrls(hostname, protocol, port, base, info)
 
@@ -654,8 +699,8 @@ async function startServer(
         })
       }
 
-      if (options.open && !isRestart) {
-        const path = typeof options.open === 'string' ? options.open : base
+      if (options?.open && !isRestart) {
+        const path = typeof options?.open === 'string' ? options.open : base
         openBrowser(
           `${protocol}://${hostname.name}:${port}${path}`,
           true,

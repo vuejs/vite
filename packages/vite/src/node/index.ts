@@ -15,6 +15,7 @@ export type {
   FileSystemServeOptions,
   CorsOrigin,
   ServerHook,
+  ListenOption,
   ResolvedServerOptions
 } from './server'
 export type {
