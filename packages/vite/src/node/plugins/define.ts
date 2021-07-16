@@ -30,31 +30,54 @@ export function definePlugin(config: ResolvedConfig): Plugin {
     })
   }
 
-  const replacements: Record<string, string | undefined> = {
-    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || config.mode),
-    'global.process.env.NODE_ENV': JSON.stringify(
-      process.env.NODE_ENV || config.mode
-    ),
-    'globalThis.process.env.NODE_ENV': JSON.stringify(
-      process.env.NODE_ENV || config.mode
-    ),
-    ...userDefine,
-    ...importMetaKeys,
-    'process.env.': `({}).`,
-    'global.process.env.': `({}).`,
-    'globalThis.process.env.': `({}).`
+  function generatePattern(
+    ssr: boolean
+  ): [Record<string, string | undefined>, RegExp] {
+    const processEnv = ssr
+      ? {
+          // account for non-node environments like v8
+          'process.env.': `(typeof process === 'undefined' ? {} : process.env).`,
+          'global.process.env.': `(typeof global.process === 'undefined' ? {} : global.process.env).`,
+          'globalThis.process.env.': `(typeof globalThis.process === 'undefined' ? {} : globalThis.process.env).`
+        }
+      : {
+          // client never has process
+          'process.env.': `({}).`,
+          'global.process.env.': `({}).`,
+          'globalThis.process.env.': `({}).`
+        }
+
+    const replacements: Record<string, string | undefined> = {
+      'process.env.NODE_ENV': JSON.stringify(
+        process.env.NODE_ENV || config.mode
+      ),
+      'global.process.env.NODE_ENV': JSON.stringify(
+        process.env.NODE_ENV || config.mode
+      ),
+      'globalThis.process.env.NODE_ENV': JSON.stringify(
+        process.env.NODE_ENV || config.mode
+      ),
+      ...userDefine,
+      ...importMetaKeys,
+      ...processEnv
+    }
+
+    const pattern = new RegExp(
+      '(?<!\\.)\\b(' +
+        Object.keys(replacements)
+          .map((str) => {
+            return str.replace(/[-[\]/{}()*+?.\\^$|]/g, '\\$&')
+          })
+          .join('|') +
+        ')\\b',
+      'g'
+    )
+
+    return [replacements, pattern]
   }
 
-  const pattern = new RegExp(
-    '(?<!\\.)\\b(' +
-      Object.keys(replacements)
-        .map((str) => {
-          return str.replace(/[-[\]/{}()*+?.\\^$|]/g, '\\$&')
-        })
-        .join('|') +
-      ')\\b',
-    'g'
-  )
+  const defaultPattern = generatePattern(false)
+  const ssrPattern = generatePattern(true)
 
   return {
     name: 'vite:define',
@@ -72,6 +95,8 @@ export function definePlugin(config: ResolvedConfig): Plugin {
       ) {
         return
       }
+
+      const [replacements, pattern] = ssr ? ssrPattern : defaultPattern
 
       if (ssr && !isBuild) {
         // ssr + dev, simple replace
