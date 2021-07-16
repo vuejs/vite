@@ -259,6 +259,9 @@ function viteLegacyPlugin(options = {}) {
       // @ts-ignore avoid esbuild transform on legacy chunks since it produces
       // legacy-unsafe code - e.g. rewriting object properties into shorthands
       opts.__vite_skip_esbuild__ = true
+      // @ts-ignore
+      // inject flag to prevent emit assets for legacy bundle
+      opts.__vite_legacy = true
 
       const needPolyfills =
         options.polyfills !== false && !Array.isArray(options.polyfills)
