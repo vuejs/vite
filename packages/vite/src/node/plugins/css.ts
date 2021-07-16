@@ -114,6 +114,11 @@ export const chunkToEmittedCssFileMap = new WeakMap<
   Set<string>
 >()
 
+const postcssConfigCache = new WeakMap<
+  ResolvedConfig,
+  PostCSSConfigResult | null
+>()
+
 /**
  * Plugin applied before user plugins
  */
@@ -721,37 +726,40 @@ interface PostCSSConfigResult {
   plugins: Postcss.Plugin[]
 }
 
-let cachedPostcssConfig: PostCSSConfigResult | null | undefined
-
 async function resolvePostcssConfig(
   config: ResolvedConfig
 ): Promise<PostCSSConfigResult | null> {
-  if (cachedPostcssConfig !== undefined) {
-    return cachedPostcssConfig
+  let result = postcssConfigCache.get(config)
+  if (result !== undefined) {
+    return result
   }
 
   // inline postcss config via vite config
   const inlineOptions = config.css?.postcss
   if (isObject(inlineOptions)) {
-    const result = {
-      options: { ...inlineOptions },
+    const options = { ...inlineOptions }
+
+    delete options.plugins
+    result = {
+      options,
       plugins: inlineOptions.plugins || []
     }
-    delete result.options.plugins
-    return (cachedPostcssConfig = result)
+  } else {
+    try {
+      const searchPath =
+        typeof inlineOptions === 'string' ? inlineOptions : config.root
+      // @ts-ignore
+      result = await postcssrc({}, searchPath)
+    } catch (e) {
+      if (!/No PostCSS Config found/.test(e.message)) {
+        throw e
+      }
+      result = null
+    }
   }
 
-  try {
-    const searchPath =
-      typeof inlineOptions === 'string' ? inlineOptions : config.root
-    // @ts-ignore
-    return (cachedPostcssConfig = await postcssrc({}, searchPath))
-  } catch (e) {
-    if (!/No PostCSS Config found/.test(e.message)) {
-      throw e
-    }
-    return (cachedPostcssConfig = null)
-  }
+  postcssConfigCache.set(config, result)
+  return result
 }
 
 type CssUrlReplacer = (
