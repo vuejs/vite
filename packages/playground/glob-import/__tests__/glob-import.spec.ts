@@ -51,6 +51,12 @@ test('should work', async () => {
   )
 })
 
+test('unassigned import processes', async () => {
+  expect(await page.textContent('.side-effect-result')).toBe(
+    'Hello from side effect'
+  )
+})
+
 if (!isBuild) {
   test('hmr for adding/removing files', async () => {
     addFile('dir/a.js', '')

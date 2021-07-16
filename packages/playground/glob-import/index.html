@@ -1,4 +1,5 @@
 <pre class="result"></pre>
+<pre class="side-effect-result"></pre>
 
 <script type="module" src="./dir/index.js"></script>
 <script type="module">
@@ -18,4 +19,10 @@
     })
     document.querySelector('.result').textContent = JSON.stringify(res, null, 2)
   })
+
+  const neverInvoke = () =>
+    (document.querySelector('.side-effect-result').textContent =
+      "Syntax generated from 'import.meta.glob' must do ASI.")
+  const notInvocation = neverInvoke
+  import.meta.globEager('/side-effect/**')
 </script>
