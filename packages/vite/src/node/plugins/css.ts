@@ -1044,7 +1044,7 @@ async function rebaseUrls(
     return { file }
   }
   const rebased = await rewriteCssUrls(content, (url) => {
-    if (url.startsWith('/')) return url
+    if (url.startsWith('/') || url.startsWith('$')) return url
     // match alias, no need to rewrite
     for (const { find } of alias) {
       const matches =
