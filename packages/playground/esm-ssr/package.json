@@ -1,0 +1,17 @@
+{
+  "name": "test-esm-ssr",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "vite build --ssr src/App.jsx"
+  },
+  "dependencies": {
+    "preact": "^10.5.13",
+    "preact-render-to-string": "^5.1.19"
+  },
+  "devDependencies": {
+    "@preact/preset-vite": "2.0.1",
+    "vite": "^2.2.3"
+  }
+}

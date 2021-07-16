@@ -115,6 +115,10 @@ cli
     `[string] build specified entry for server-side rendering`
   )
   .option(
+    '-ssrFormat [format]',
+    '[string] SSR module format, either "cjs" or "es"'
+  )
+  .option(
     '--sourcemap',
     `[boolean] output source maps for build (default: false)`
   )
