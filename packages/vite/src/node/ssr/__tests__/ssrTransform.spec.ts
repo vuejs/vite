@@ -11,7 +11,7 @@ test('default import', async () => {
       )
     ).code
   ).toMatchInlineSnapshot(`
-    "const __vite_ssr_import_0__ = __vite_ssr_import__(\\"vue\\")
+    "const __vite_ssr_import_0__ = await __vite_ssr_import__(\\"vue\\");
     console.log(__vite_ssr_import_0__.default.bar)"
   `)
 })
@@ -26,7 +26,7 @@ test('named import', async () => {
       )
     ).code
   ).toMatchInlineSnapshot(`
-    "const __vite_ssr_import_0__ = __vite_ssr_import__(\\"vue\\")
+    "const __vite_ssr_import_0__ = await __vite_ssr_import__(\\"vue\\");
     function foo() { return __vite_ssr_import_0__.ref(0) }"
   `)
 })
@@ -41,7 +41,7 @@ test('namespace import', async () => {
       )
     ).code
   ).toMatchInlineSnapshot(`
-    "const __vite_ssr_import_0__ = __vite_ssr_import__(\\"vue\\")
+    "const __vite_ssr_import_0__ = await __vite_ssr_import__(\\"vue\\");
     function foo() { return __vite_ssr_import_0__.ref(0) }"
   `)
 })
@@ -50,7 +50,7 @@ test('export function declaration', async () => {
   expect((await ssrTransform(`export function foo() {}`, null, null)).code)
     .toMatchInlineSnapshot(`
     "function foo() {}
-    Object.defineProperty(__vite_ssr_exports__, \\"foo\\", { enumerable: true, configurable: true, get(){ return foo }})"
+    Object.defineProperty(__vite_ssr_exports__, \\"foo\\", { enumerable: true, configurable: true, get(){ return foo }});"
   `)
 })
 
@@ -58,7 +58,7 @@ test('export class declaration', async () => {
   expect((await ssrTransform(`export class foo {}`, null, null)).code)
     .toMatchInlineSnapshot(`
     "class foo {}
-    Object.defineProperty(__vite_ssr_exports__, \\"foo\\", { enumerable: true, configurable: true, get(){ return foo }})"
+    Object.defineProperty(__vite_ssr_exports__, \\"foo\\", { enumerable: true, configurable: true, get(){ return foo }});"
   `)
 })
 
@@ -66,8 +66,8 @@ test('export var declaration', async () => {
   expect((await ssrTransform(`export const a = 1, b = 2`, null, null)).code)
     .toMatchInlineSnapshot(`
     "const a = 1, b = 2
-    Object.defineProperty(__vite_ssr_exports__, \\"a\\", { enumerable: true, configurable: true, get(){ return a }})
-    Object.defineProperty(__vite_ssr_exports__, \\"b\\", { enumerable: true, configurable: true, get(){ return b }})"
+    Object.defineProperty(__vite_ssr_exports__, \\"a\\", { enumerable: true, configurable: true, get(){ return a }});
+    Object.defineProperty(__vite_ssr_exports__, \\"b\\", { enumerable: true, configurable: true, get(){ return b }});"
   `)
 })
 
@@ -77,8 +77,8 @@ test('export named', async () => {
       .code
   ).toMatchInlineSnapshot(`
     "const a = 1, b = 2; 
-    Object.defineProperty(__vite_ssr_exports__, \\"a\\", { enumerable: true, configurable: true, get(){ return a }})
-    Object.defineProperty(__vite_ssr_exports__, \\"c\\", { enumerable: true, configurable: true, get(){ return b }})"
+    Object.defineProperty(__vite_ssr_exports__, \\"a\\", { enumerable: true, configurable: true, get(){ return a }});
+    Object.defineProperty(__vite_ssr_exports__, \\"c\\", { enumerable: true, configurable: true, get(){ return b }});"
   `)
 })
 
@@ -87,10 +87,10 @@ test('export named from', async () => {
     (await ssrTransform(`export { ref, computed as c } from 'vue'`, null, null))
       .code
   ).toMatchInlineSnapshot(`
-    "const __vite_ssr_import_0__ = __vite_ssr_import__(\\"vue\\")
+    "const __vite_ssr_import_0__ = await __vite_ssr_import__(\\"vue\\");
 
-    Object.defineProperty(__vite_ssr_exports__, \\"ref\\", { enumerable: true, configurable: true, get(){ return __vite_ssr_import_0__.ref }})
-    Object.defineProperty(__vite_ssr_exports__, \\"c\\", { enumerable: true, configurable: true, get(){ return __vite_ssr_import_0__.computed }})"
+    Object.defineProperty(__vite_ssr_exports__, \\"ref\\", { enumerable: true, configurable: true, get(){ return __vite_ssr_import_0__.ref }});
+    Object.defineProperty(__vite_ssr_exports__, \\"c\\", { enumerable: true, configurable: true, get(){ return __vite_ssr_import_0__.computed }});"
   `)
 })
 
@@ -104,27 +104,35 @@ test('named exports of imported binding', async () => {
       )
     ).code
   ).toMatchInlineSnapshot(`
-    "const __vite_ssr_import_0__ = __vite_ssr_import__(\\"vue\\")
+    "const __vite_ssr_import_0__ = await __vite_ssr_import__(\\"vue\\");
 
-    Object.defineProperty(__vite_ssr_exports__, \\"createApp\\", { enumerable: true, configurable: true, get(){ return __vite_ssr_import_0__.createApp }})"
+    Object.defineProperty(__vite_ssr_exports__, \\"createApp\\", { enumerable: true, configurable: true, get(){ return __vite_ssr_import_0__.createApp }});"
   `)
 })
 
 test('export * from', async () => {
-  expect((await ssrTransform(`export * from 'vue'`, null, null)).code)
-    .toMatchInlineSnapshot(`
-    "const __vite_ssr_import_0__ = __vite_ssr_import__(\\"vue\\")
-
-    __vite_ssr_exportAll__(__vite_ssr_import_0__)"
+  expect(
+    (
+      await ssrTransform(
+        `export * from 'vue'\n` + `export * from 'react'`,
+        null,
+        null
+      )
+    ).code
+  ).toMatchInlineSnapshot(`
+    "const __vite_ssr_import_0__ = await __vite_ssr_import__(\\"vue\\");
+    __vite_ssr_exportAll__(__vite_ssr_import_0__);
+    const __vite_ssr_import_1__ = await __vite_ssr_import__(\\"react\\");
+    __vite_ssr_exportAll__(__vite_ssr_import_1__);"
   `)
 })
 
 test('export * as from', async () => {
   expect((await ssrTransform(`export * as foo from 'vue'`, null, null)).code)
     .toMatchInlineSnapshot(`
-    "const __vite_ssr_import_0__ = __vite_ssr_import__(\\"vue\\")
+    "const __vite_ssr_import_0__ = await __vite_ssr_import__(\\"vue\\");
 
-    Object.defineProperty(__vite_ssr_exports__, \\"foo\\", { enumerable: true, configurable: true, get(){ return __vite_ssr_import_0__ }})"
+    Object.defineProperty(__vite_ssr_exports__, \\"foo\\", { enumerable: true, configurable: true, get(){ return __vite_ssr_import_0__ }});"
   `)
 })
 
@@ -146,7 +154,7 @@ test('dynamic import', async () => {
       .code
   ).toMatchInlineSnapshot(`
     "const i = () => __vite_ssr_dynamic_import__('./foo')
-    Object.defineProperty(__vite_ssr_exports__, \\"i\\", { enumerable: true, configurable: true, get(){ return i }})"
+    Object.defineProperty(__vite_ssr_exports__, \\"i\\", { enumerable: true, configurable: true, get(){ return i }});"
   `)
 })
 
@@ -160,7 +168,7 @@ test('do not rewrite method definition', async () => {
       )
     ).code
   ).toMatchInlineSnapshot(`
-    "const __vite_ssr_import_0__ = __vite_ssr_import__(\\"vue\\")
+    "const __vite_ssr_import_0__ = await __vite_ssr_import__(\\"vue\\");
     class A { fn() { __vite_ssr_import_0__.fn() } }"
   `)
 })
@@ -175,7 +183,7 @@ test('do not rewrite catch clause', async () => {
       )
     ).code
   ).toMatchInlineSnapshot(`
-    "const __vite_ssr_import_0__ = __vite_ssr_import__(\\"./dependency\\")
+    "const __vite_ssr_import_0__ = await __vite_ssr_import__(\\"./dependency\\");
     try {} catch(error) {}"
   `)
 })
@@ -191,7 +199,7 @@ test('should declare variable for imported super class', async () => {
       )
     ).code
   ).toMatchInlineSnapshot(`
-    "const __vite_ssr_import_0__ = __vite_ssr_import__(\\"./dependency\\")
+    "const __vite_ssr_import_0__ = await __vite_ssr_import__(\\"./dependency\\");
     const Foo = __vite_ssr_import_0__.Foo;
     class A extends Foo {}"
   `)
@@ -209,12 +217,12 @@ test('should declare variable for imported super class', async () => {
       )
     ).code
   ).toMatchInlineSnapshot(`
-    "const __vite_ssr_import_0__ = __vite_ssr_import__(\\"./dependency\\")
+    "const __vite_ssr_import_0__ = await __vite_ssr_import__(\\"./dependency\\");
     const Foo = __vite_ssr_import_0__.Foo;
     class A extends Foo {}
     class B extends Foo {}
-    Object.defineProperty(__vite_ssr_exports__, \\"default\\", { enumerable: true, value: A })
-    Object.defineProperty(__vite_ssr_exports__, \\"B\\", { enumerable: true, configurable: true, get(){ return B }})"
+    Object.defineProperty(__vite_ssr_exports__, \\"default\\", { enumerable: true, value: A });
+    Object.defineProperty(__vite_ssr_exports__, \\"B\\", { enumerable: true, configurable: true, get(){ return B }});"
   `)
 })
 
@@ -246,7 +254,7 @@ test('should handle default export variants', async () => {
   ).toMatchInlineSnapshot(`
     "function foo() {}
     foo.prototype = Object.prototype;
-    Object.defineProperty(__vite_ssr_exports__, \\"default\\", { enumerable: true, value: foo })"
+    Object.defineProperty(__vite_ssr_exports__, \\"default\\", { enumerable: true, value: foo });"
   `)
   // default named classes
   expect(
@@ -260,8 +268,8 @@ test('should handle default export variants', async () => {
   ).toMatchInlineSnapshot(`
     "class A {}
     class B extends A {}
-    Object.defineProperty(__vite_ssr_exports__, \\"default\\", { enumerable: true, value: A })
-    Object.defineProperty(__vite_ssr_exports__, \\"B\\", { enumerable: true, configurable: true, get(){ return B }})"
+    Object.defineProperty(__vite_ssr_exports__, \\"default\\", { enumerable: true, value: A });
+    Object.defineProperty(__vite_ssr_exports__, \\"B\\", { enumerable: true, configurable: true, get(){ return B }});"
   `)
 })
 
@@ -288,7 +296,7 @@ test('overwrite bindings', async () => {
       )
     ).code
   ).toMatchInlineSnapshot(`
-    "const __vite_ssr_import_0__ = __vite_ssr_import__(\\"vue\\")
+    "const __vite_ssr_import_0__ = await __vite_ssr_import__(\\"vue\\");
     const a = { inject: __vite_ssr_import_0__.inject }
     const b = { test: __vite_ssr_import_0__.inject }
     function c() { const { test: inject } = { test: true }; console.log(inject) }
