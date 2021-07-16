@@ -1,0 +1,50 @@
+{
+  "name": "@vitejs/plugin-react",
+  "version": "1.0.0",
+  "license": "MIT",
+  "author": "Evan You",
+  "contributors": [
+    "Alec Larson"
+  ],
+  "files": [
+    "dist",
+    "src"
+  ],
+  "main": "dist/plugin-react.cjs.js",
+  "module": "dist/plugin-react.es.js",
+  "exports": {
+    "import": "./dist/plugin-react.es.js",
+    "require": "./dist/plugin-react.cjs.js"
+  },
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "vite build",
+    "changelog": "conventional-changelog -p angular -i CHANGELOG.md -s --commit-path . --lerna-package plugin-react",
+    "release": "node ../../scripts/release.js --skipBuild"
+  },
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vitejs/vite.git",
+    "directory": "packages/plugin-react"
+  },
+  "bugs": {
+    "url": "https://github.com/vitejs/vite/issues"
+  },
+  "homepage": "https://github.com/vitejs/vite/tree/main/packages/plugin-react#readme",
+  "dependencies": {
+    "@babel/core": "^7.14.6",
+    "@babel/plugin-transform-react-jsx": "^7.14.5",
+    "@babel/plugin-transform-react-jsx-self": "^7.14.5",
+    "@babel/plugin-transform-react-jsx-source": "^7.14.5",
+    "@rollup/pluginutils": "^4.1.0",
+    "react-refresh": "^0.10.0",
+    "resolve": "^1.20.0"
+  },
+  "devDependencies": {
+    "vite": "link:../vite",
+    "vite-dts": "^1.0.2"
+  }
+}
