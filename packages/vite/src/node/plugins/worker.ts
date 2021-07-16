@@ -105,6 +105,20 @@ export function webWorkerPlugin(config: ResolvedConfig): Plugin {
         query.sharedworker != null ? 'SharedWorker' : 'Worker'
       const workerOptions = { type: 'module' }
 
+      const isNode = (config.build.target as string).includes('node')
+
+      if (isNode) {
+        return `
+        import { Worker } from "worker_threads" \n
+        import { join } from "path" \n
+        export default function WorkerWrapper() {
+          return new ${workerConstructor}(join(__dirname, ${JSON.stringify(
+          url
+        )}), ${JSON.stringify(workerOptions, null, 2)})
+        }
+        `
+      }
+
       return `export default function WorkerWrapper() {
         return new ${workerConstructor}(${JSON.stringify(
         url
