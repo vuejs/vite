@@ -96,11 +96,11 @@ async function instantiateModule(
     dep = unwrapId(dep)
     if (!isCircular(dep) && !pendingImports.get(dep)?.some(isCircular)) {
       pendingDeps.push(dep)
-      if (pendingDeps.length == 1) {
+      if (pendingDeps.length === 1) {
         pendingImports.set(url, pendingDeps)
       }
       await ssrLoadModule(dep, server, context, urlStack)
-      if (pendingDeps.length == 1) {
+      if (pendingDeps.length === 1) {
         pendingImports.delete(url)
       } else {
         pendingDeps.splice(pendingDeps.indexOf(dep), 1)
@@ -133,6 +133,7 @@ async function instantiateModule(
   }
 
   try {
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     const AsyncFunction = async function () {}.constructor as typeof Function
     const initModule = new AsyncFunction(
       `global`,
