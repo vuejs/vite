@@ -80,7 +80,23 @@ export function assetPlugin(config: ResolvedConfig): Plugin {
       const url = await fileToUrl(id, config, this)
       return `export default ${JSON.stringify(url)}`
     },
+    augmentChunkHash(info) {
+      const allIds = Array.from(this.getModuleIds())
+      const ids = Object.keys(info.modules).filter((moduleId) =>
+        allIds.includes(moduleId)
+      )
 
+      if (ids.length === 0) return
+
+      const modules = ids
+        .map((id) => this.getModuleInfo(id))
+        .filter((module) => assetUrlQuotedRE.test(module?.code ?? ''))
+      const codes = modules.map((m) =>
+        m?.id !== undefined ? fs.readFileSync(cleanUrl(m.id), 'utf-8') : ''
+      )
+
+      return codes.join('')
+    },
     renderChunk(code, chunk) {
       let match
       let s
