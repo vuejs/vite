@@ -85,6 +85,7 @@ export function resolvePlugin(baseOptions: InternalResolveOptions): Plugin {
     },
 
     resolveId(id, importer, resolveOpts, ssr) {
+      id = id.toLowerCase()
       if (id.startsWith(browserExternalId)) {
         return id
       }
