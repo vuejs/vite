@@ -315,7 +315,7 @@ function esbuildScanPlugin(
         externalUnlessEntry
       )
 
-      // known vite query types: ?worker, ?raw
+      // known vite query types: ?worker, ?raw, ?html
       build.onResolve({ filter: SPECIAL_QUERY_RE }, ({ path }) => ({
         path,
         external: true

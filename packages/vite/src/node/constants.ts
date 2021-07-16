@@ -19,7 +19,7 @@ export const JS_TYPES_RE = /\.(?:j|t)sx?$|\.mjs$/
 
 export const OPTIMIZABLE_ENTRY_RE = /\.(?:m?js|ts)$/
 
-export const SPECIAL_QUERY_RE = /[\?&](?:worker|sharedworker|raw|url)\b/
+export const SPECIAL_QUERY_RE = /[\?&](?:worker|sharedworker|raw|url|html)\b/
 
 /**
  * Prefix for resolved fs paths, since windows paths may not be valid as URLs.
