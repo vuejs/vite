@@ -150,7 +150,9 @@ export function cssPlugin(config: ResolvedConfig): Plugin {
         if (checkPublicFile(url, config)) {
           return config.base + url.slice(1)
         }
-        const resolved = await resolveUrl(url, importer)
+        const resolved =
+          (await resolveUrl(url, importer)) ||
+          (await this.resolve(url, importer))?.id
         if (resolved) {
           return fileToUrl(resolved, config, this)
         }
