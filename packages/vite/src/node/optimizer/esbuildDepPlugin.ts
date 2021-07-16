@@ -1,3 +1,4 @@
+import fs from 'fs'
 import path from 'path'
 import { Loader, Plugin, ImportKind } from 'esbuild'
 import { KNOWN_ASSET_TYPES } from '../constants'
@@ -131,6 +132,24 @@ export function esbuildDepPlugin(
           }
         }
       )
+
+      const rawUrlRE = /\?raw$/
+
+      build.onResolve(
+        { filter: rawUrlRE },
+        async ({ path: id, importer, kind }) => ({
+          path: await resolve(id.replace(rawUrlRE, ''), importer, kind),
+          namespace: 'raw'
+        })
+      )
+
+      build.onLoad({ filter: /.*/, namespace: 'raw' }, async ({ path }) => {
+        const text = await fs.promises.readFile(path, 'utf8')
+        return {
+          loader: 'json',
+          contents: JSON.stringify(text)
+        }
+      })
 
       // For entry files, we'll read it ourselves and construct a proxy module
       // to retain the entry's raw id instead of file path so that esbuild
