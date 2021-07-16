@@ -129,9 +129,17 @@ export function resolvePlugin(baseOptions: InternalResolveOptions): Plugin {
 
       // relative
       if (id.startsWith('.') || (preferRelative && /^\w/.test(id))) {
-        const basedir = importer ? path.dirname(importer) : process.cwd()
+        let realImporter: string | undefined
+        try {
+          // see #3165, ensure relative import resolves to intended file path
+          realImporter =
+            importer && fs.realpathSync.native(importer.replace(/[?#].*$/g, ''))
+        } catch {}
+
+        const basedir = importer
+          ? path.dirname(realImporter || importer)
+          : process.cwd()
         const fsPath = path.resolve(basedir, id)
-        // handle browser field mapping for relative imports
 
         const normalizedFsPath = normalizePath(fsPath)
         const pathFromBasedir = normalizedFsPath.slice(basedir.length)
