@@ -6,6 +6,9 @@ p.pug
 p.pug-less
   | This is rendered from &lt;template lang="pug"&gt;
   | and styled with &lt;style lang="less"&gt;. It should be green.
+p.pug-stylus
+  | This is rendered from &lt;template lang="pug"&gt;
+  | and styled with &lt;style lang="stylus"&gt;. It should be orange.
 SlotComponent
   template(v-slot:test-slot)
     div.pug-slot slot content
@@ -31,4 +34,11 @@ $color: magenta;
 .pug-less {
   color: @color;
 }
+</style>
+
+<style lang="stylus">
+color = orange
+
+.pug-stylus
+  color: color
 </style>

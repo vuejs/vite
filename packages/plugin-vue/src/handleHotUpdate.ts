@@ -88,7 +88,11 @@ export async function handleHotUpdate({
     const next = nextStyles[i]
     if (!prev || !isEqualBlock(prev, next)) {
       didUpdateStyle = true
-      const mod = modules.find((m) => m.url.includes(`type=style&index=${i}`))
+      const mod = modules.find(
+        (m) =>
+          m.url.includes(`type=style&index=${i}`) &&
+          m.url.endsWith(`.${next.lang || 'css'}`)
+      )
       if (mod) {
         affectedModules.add(mod)
       } else {
