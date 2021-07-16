@@ -8,7 +8,8 @@ import {
 } from 'types/hmrPayload'
 import { CustomEventName } from 'types/customEvent'
 import { ErrorOverlay, overlayId } from './overlay'
-import './env'
+// eslint-disable-next-line node/no-missing-import
+import '@vite/env'
 
 // injected by the hmr plugin when served
 declare const __ROOT__: string

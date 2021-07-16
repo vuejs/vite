@@ -21,7 +21,12 @@ import { ESBuildOptions } from './plugins/esbuild'
 import dotenv from 'dotenv'
 import dotenvExpand from 'dotenv-expand'
 import { Alias, AliasOptions } from 'types/alias'
-import { CLIENT_DIR, DEFAULT_ASSETS_RE } from './constants'
+import {
+  CLIENT_PUBLIC_PATH,
+  CLIENT_ENTRY,
+  ENV_ENTRY,
+  DEFAULT_ASSETS_RE
+} from './constants'
 import {
   InternalResolveOptions,
   ResolveOptions,
@@ -294,13 +299,16 @@ export async function resolveConfig(
     config.root ? path.resolve(config.root) : process.cwd()
   )
 
+  const clientAlias = [
+    { find: /^[\/]?@vite\/env/, replacement: () => ENV_ENTRY },
+    { find: CLIENT_PUBLIC_PATH, replacement: () => CLIENT_ENTRY }
+  ]
+
   // resolve alias with internal client alias
   const resolvedAlias = mergeAlias(
-    // #1732 the CLIENT_DIR may contain $$ which cannot be used as direct
-    // replacement string.
     // @ts-ignore because @rollup/plugin-alias' type doesn't allow function
     // replacement, but its implementation does work with function values.
-    [{ find: /^\/@vite\//, replacement: () => CLIENT_DIR + '/' }],
+    clientAlias,
     config.resolve?.alias || config.alias || []
   )
 
