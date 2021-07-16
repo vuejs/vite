@@ -260,24 +260,13 @@ export function resolvePlugin(baseOptions: InternalResolveOptions): Plugin {
   }
 }
 
-function tryFsResolve(
-  fsPath: string,
+function tryResolve(
+  file: string,
+  postfix: string,
   options: InternalResolveOptions,
   tryIndex = true,
   targetWeb = true
 ): string | undefined {
-  let file = fsPath
-  let postfix = ''
-
-  let postfixIndex = fsPath.indexOf('?')
-  if (postfixIndex < 0) {
-    postfixIndex = fsPath.indexOf('#')
-  }
-  if (postfixIndex > 0) {
-    file = fsPath.slice(0, postfixIndex)
-    postfix = fsPath.slice(postfixIndex)
-  }
-
   let res: string | undefined
   if (
     (res = tryResolveFile(
@@ -317,6 +306,35 @@ function tryFsResolve(
       options.tryPrefix
     ))
   ) {
+    return res
+  }
+}
+
+function tryFsResolve(
+  fsPath: string,
+  options: InternalResolveOptions,
+  tryIndex = true
+): string | undefined {
+  let file = fsPath
+  let postfix = ''
+  let res: string | undefined
+
+  // 1、Try resolving without removing postfixes first
+  if ((res = tryResolve(file, postfix, options, tryIndex))) {
+    return res
+  }
+
+  // 2、If that didn't work, treat ? and # as postfixes, remove them and try resolving again.
+  let postfixIndex = fsPath.indexOf('?')
+  if (postfixIndex < 0) {
+    postfixIndex = fsPath.indexOf('#')
+  }
+  if (postfixIndex > 0) {
+    file = fsPath.slice(0, postfixIndex)
+    postfix = fsPath.slice(postfixIndex)
+  }
+
+  if ((res = tryResolve(file, postfix, options, tryIndex))) {
     return res
   }
 }
