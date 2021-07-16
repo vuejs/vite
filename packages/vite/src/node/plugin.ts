@@ -115,6 +115,16 @@ export interface Plugin extends RollupPlugin {
   ): Array<ModuleNode> | void | Promise<Array<ModuleNode> | void>
 
   /**
+   * Resolve an asset's public URL. This hook can call `this.emitFile` and
+   * return `__VITE_ASSET__${emitFileResult}__` to be replaced by Vite
+   * later in the build.
+   */
+  resolveBuiltUrl?(
+    this: PluginContext,
+    url: string
+  ): Promise<string | null | undefined> | string | null | undefined
+
+  /**
    * extend hooks with ssr flag
    */
   resolveId?(

@@ -150,15 +150,16 @@ export function checkPublicFile(
   }
 }
 
-export function fileToUrl(
+export async function fileToUrl(
   id: string,
   config: ResolvedConfig,
   ctx: PluginContext
-): string | Promise<string> {
+): Promise<string> {
   if (config.command === 'serve') {
     return fileToDevUrl(id, config)
   } else {
-    return fileToBuiltUrl(id, config, ctx)
+    const builtUrl = await resolveBuiltUrl(id, config, ctx)
+    return builtUrl || fileToBuiltUrl(id, config, ctx)
   }
 }
 
@@ -262,19 +263,51 @@ export async function urlToBuiltUrl(
   url: string,
   importer: string,
   config: ResolvedConfig,
-  pluginContext: PluginContext
+  ctx: PluginContext
 ): Promise<string> {
+  const builtUrl = await resolveBuiltUrl(url, config, ctx)
+  if (builtUrl) {
+    return builtUrl
+  }
+
   if (checkPublicFile(url, config)) {
     return config.base + url.slice(1)
   }
+
   const file = url.startsWith('/')
     ? path.join(config.root, url)
     : path.join(path.dirname(importer), url)
+
   return fileToBuiltUrl(
     file,
     config,
-    pluginContext,
+    ctx,
     // skip public check since we just did it above
     true
   )
+}
+
+async function resolveBuiltUrl(
+  url: string,
+  config: ResolvedConfig,
+  ctx: PluginContext
+): Promise<string | undefined> {
+  for (const { resolveBuiltUrl } of config.plugins) {
+    if (resolveBuiltUrl) {
+      const builtUrl = await resolveBuiltUrl.call(ctx, url)
+      if (builtUrl) {
+        const match = builtUrl.match(/^__VITE_ASSET__(.+?)__/)
+        if (match) {
+          let map = assetHashToFilenameMap.get(config)
+          if (!map) {
+            map = new Map()
+            assetHashToFilenameMap.set(config, map)
+          }
+          const contentHash = match[1]
+          map.set(contentHash, ctx.getFileName(contentHash))
+        }
+        return builtUrl
+      }
+    }
+  }
 }
