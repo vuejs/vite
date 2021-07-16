@@ -46,7 +46,8 @@ export function proxyMiddleware(
 
     proxy.on('error', (err) => {
       config.logger.error(`${chalk.red(`http proxy error:`)}\n${err.stack}`, {
-        timestamp: true
+        timestamp: true,
+        error: err
       })
     })
 

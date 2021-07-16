@@ -3,6 +3,7 @@
 import chalk from 'chalk'
 import readline from 'readline'
 import os from 'os'
+import { RollupError } from 'rollup'
 import { Hostname } from './utils'
 
 export type LogType = 'error' | 'warn' | 'info'
@@ -11,8 +12,12 @@ export interface Logger {
   info(msg: string, options?: LogOptions): void
   warn(msg: string, options?: LogOptions): void
   warnOnce(msg: string, options?: LogOptions): void
-  error(msg: string, options?: LogOptions): void
+  error(
+    msg: string,
+    options: LogOptions & { error: Error | RollupError | null }
+  ): void
   clearScreen(type: LogType): void
+  hasLogged(error: Error | RollupError): boolean
   hasWarned: boolean
 }
 
@@ -51,13 +56,18 @@ export function createLogger(
 ): Logger {
   const { prefix = '[vite]', allowClearScreen = true } = options
 
+  const loggedErrors = new WeakMap<Error | RollupError, boolean>()
   const thresh = LogLevels[level]
   const clear =
     allowClearScreen && process.stdout.isTTY && !process.env.CI
       ? clearScreen
       : () => {}
 
-  function output(type: LogType, msg: string, options: LogOptions = {}) {
+  function output(
+    type: LogType,
+    msg: string,
+    options: LogOptions & { error?: Error | RollupError | null } = {}
+  ) {
     if (thresh >= LogLevels[type]) {
       const method = type === 'info' ? 'log' : type
       const format = () => {
@@ -72,6 +82,9 @@ export function createLogger(
         } else {
           return msg
         }
+      }
+      if (options.error) {
+        loggedErrors.set(options.error, true)
       }
       if (type === lastType && msg === lastMsg) {
         sameCount++
@@ -114,6 +127,9 @@ export function createLogger(
       if (thresh >= LogLevels[type]) {
         clear()
       }
+    },
+    hasLogged(error) {
+      return loggedErrors.has(error)
     }
   }
 

@@ -78,7 +78,8 @@ export function createWebSocketServer(
   wss.on('error', (e: Error & { code: string }) => {
     if (e.code !== 'EADDRINUSE') {
       config.logger.error(
-        chalk.red(`WebSocket server error:\n${e.stack || e.message}`)
+        chalk.red(`WebSocket server error:\n${e.stack || e.message}`),
+        { error: e }
       )
     }
   })

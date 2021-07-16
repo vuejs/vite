@@ -47,11 +47,12 @@ function executeNodeScript(scriptPath: string, url: string, logger: Logger) {
     if (code !== 0) {
       logger.error(
         chalk.red(
-          '\nThe script specified as BROWSER environment variable failed.\n'
-        )
+          `\nThe script specified as BROWSER environment variable failed.\n\n${chalk.cyan(
+            scriptPath
+          )} exited with code ${code}.`
+        ),
+        { error: null }
       )
-      logger.error(chalk.cyan(scriptPath) + ' exited with code ' + code + '.')
-      return
     }
   })
   return true

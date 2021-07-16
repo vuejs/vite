@@ -52,7 +52,8 @@ export function errorMiddleware(
 
     server.config.logger.error(msg, {
       clear: true,
-      timestamp: true
+      timestamp: true,
+      error: err
     })
 
     server.ws.send({

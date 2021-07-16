@@ -147,7 +147,8 @@ async function instantiateModule(
       `Error when evaluating SSR module ${url}:\n${stacktrace}`,
       {
         timestamp: true,
-        clear: server.config.clearScreen
+        clear: server.config.clearScreen,
+        error: e
       }
     )
     throw e

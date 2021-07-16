@@ -401,16 +401,16 @@ async function doBuild(
   }
 
   const outputBuildError = (e: RollupError) => {
-    config.logger.error(
-      chalk.red(`${e.plugin ? `[${e.plugin}] ` : ''}${e.message}`)
-    )
+    let msg = chalk.red((e.plugin ? `[${e.plugin}] ` : '') + e.message)
     if (e.id) {
-      const loc = e.loc ? `:${e.loc.line}:${e.loc.column}` : ''
-      config.logger.error(`file: ${chalk.cyan(`${e.id}${loc}`)}`)
+      msg += `\nfile: ${chalk.cyan(
+        e.id + (e.loc ? `:${e.loc.line}:${e.loc.column}` : '')
+      )}`
     }
     if (e.frame) {
-      config.logger.error(chalk.yellow(e.frame))
+      msg += `\n` + chalk.yellow(e.frame)
     }
+    config.logger.error(msg, { error: e })
   }
 
   try {

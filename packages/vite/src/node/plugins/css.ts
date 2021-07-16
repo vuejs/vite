@@ -850,7 +850,9 @@ async function minifyCSS(css: string, config: ResolvedConfig) {
   }).minify(css)
 
   if (res.errors && res.errors.length) {
-    config.logger.error(chalk.red(`error when minifying css:\n${res.errors}`))
+    config.logger.error(chalk.red(`error when minifying css:\n${res.errors}`), {
+      error: res.errors[0]
+    })
     throw res.errors[0]
   }
 

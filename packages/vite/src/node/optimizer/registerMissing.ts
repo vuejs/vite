@@ -66,7 +66,7 @@ export function createMissingImporterRegisterFn(
     } catch (e) {
       logger.error(
         chalk.red(`error while updating dependencies:\n${e.stack}`),
-        { timestamp: true }
+        { timestamp: true, error: e }
       )
     } finally {
       server._isRunningOptimizer = false
