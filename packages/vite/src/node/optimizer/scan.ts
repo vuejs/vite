@@ -351,11 +351,26 @@ function esbuildScanPlugin(
       // for jsx/tsx, we need to access the content and check for
       // presence of import.meta.glob, since it results in import relationships
       // but isn't crawled by esbuild.
-      build.onLoad({ filter: JS_TYPES_RE }, ({ path: id }) => {
+      build.onLoad({ filter: JS_TYPES_RE }, async ({ path: id }) => {
         let ext = path.extname(id).slice(1)
         if (ext === 'mjs') ext = 'js'
 
-        let contents = fs.readFileSync(id, 'utf-8')
+        let contents: string
+        try {
+          contents = fs.readFileSync(id, 'utf-8')
+        } catch (e) {
+          if (e.code !== 'ENOENT') {
+            throw e
+          }
+          // assume this is a virtual module that wants to be scanned
+          // by the optimizer. any virtual module that doesn't want that
+          // should put \0 in its id or return itself in resolveId hook.
+          const loaded = await container.load(id)
+          if (!loaded) {
+            throw e
+          }
+          contents = typeof loaded === 'string' ? loaded : loaded.code
+        }
         if (ext.endsWith('x') && config.esbuild && config.esbuild.jsxInject) {
           contents = config.esbuild.jsxInject + `\n` + contents
         }
