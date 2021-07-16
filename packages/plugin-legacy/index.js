@@ -641,3 +641,7 @@ viteLegacyPlugin.cspHashes = [
   createHash('sha256').update(safari10NoModuleFix).digest('base64'),
   createHash('sha256').update(systemJSInlineCode).digest('base64')
 ]
+
+viteLegacyPlugin.safari10NoModuleFixCode = safari10NoModuleFix
+viteLegacyPlugin.legacyInlineScriptId = legacyEntryId
+viteLegacyPlugin.legacyInlineScriptCode = systemJSInlineCode
