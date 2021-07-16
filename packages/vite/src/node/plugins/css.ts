@@ -114,6 +114,8 @@ export const chunkToEmittedCssFileMap = new WeakMap<
   Set<string>
 >()
 
+export const romovedPureCssFiles = new Map<string, RenderedChunk>()
+
 /**
  * Plugin applied before user plugins
  */
@@ -445,6 +447,7 @@ export function cssPostPlugin(config: ResolvedConfig): Plugin {
           }
         }
         pureCssChunks.forEach((fileName) => {
+          romovedPureCssFiles.set(fileName, bundle[fileName] as RenderedChunk)
           delete bundle[fileName]
         })
       }
