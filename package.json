@@ -58,6 +58,22 @@
     "vitepress": "^0.15.6",
     "yorkie": "^2.0.0"
   },
+  "peerDependencies": {
+    "sass": "^1.32.7",
+    "stylus": "^0.54.8",
+    "less": "^4.1.1"
+  },
+  "peerDependenciesMeta": {
+    "sass": {
+      "optional": true
+    },
+    "stylus": {
+      "optional": true
+    },
+    "less": {
+      "optional": true
+    }
+  },
   "gitHooks": {
     "pre-commit": "lint-staged",
     "commit-msg": "node scripts/verifyCommit.js"
