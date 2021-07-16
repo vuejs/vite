@@ -38,6 +38,11 @@ After the server has already started, if a new dependency import is encountered 
 
 In a monorepo setup, a dependency may be a linked package from the same repo. Vite automatically detects dependencies that are not resolved from `node_modules` and treats the linked dep as source code. It will not attempt to bundle the linked dep, and instead will analyze the linked dep's dependency list instead.
 
+::: warning Note
+Linked dependencies might not work properly in the final build due to differences in dependency resolution.
+Use `npm package` instead for all local dependencies to avoid issues in the final bundle.
+:::
+
 ## Customizing the Behavior
 
 The default dependency discovery heuristics may not always be desirable. In cases where you want to explicitly include/exclude dependencies from the list, use the [`optimizeDeps` config options](/config/#dep-optimization-options).
