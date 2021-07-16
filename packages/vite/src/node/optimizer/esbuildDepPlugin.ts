@@ -69,14 +69,18 @@ export function esbuildDepPlugin(
   return {
     name: 'vite:dep-pre-bundle',
     setup(build) {
+      const nonJsFileRE = new RegExp(
+        `\\.(` + externalTypes.join('|') + `)(\\?.*)?$`
+      )
       // externalize assets and commonly known non-js file types
       build.onResolve(
         {
-          filter: new RegExp(`\\.(` + externalTypes.join('|') + `)(\\?.*)?$`)
+          filter: nonJsFileRE
         },
         async ({ path: id, importer, kind }) => {
           const resolved = await resolve(id, importer, kind)
-          if (resolved) {
+          // ensure the files finally resolved as js won't be marked to external
+          if (resolved && nonJsFileRE.test(resolved)) {
             return {
               path: resolved,
               external: true
