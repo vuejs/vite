@@ -108,7 +108,7 @@
     "minimatch": "^3.0.4",
     "okie": "^1.0.1",
     "open": "^8.2.1",
-    "periscopic": "^2.0.3",
+    "periscopic": "^3.0.2",
     "postcss-import": "^14.0.2",
     "postcss-load-config": "^3.0.0",
     "postcss-modules": "^4.1.3",

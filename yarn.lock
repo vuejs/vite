@@ -3063,6 +3063,11 @@ estree-walker@^2.0.1, estree-walker@^2.0.2:
   resolved "https://registry.yarnpkg.com/estree-walker/-/estree-walker-2.0.2.tgz#52f010178c2a4c117a7757cfe942adb7d2da4cac"
   integrity sha512-Rfkk/Mp/DL7JVje3u18FxFujQlTNR2q6QfMSMB7AvCBx91NGj/ba3kCfza0f6dVDbw7YlRf/nDrn7pQrCCyQ/w==
 
+estree-walker@^3.0.0:
+  version "3.0.0"
+  resolved "https://registry.yarnpkg.com/estree-walker/-/estree-walker-3.0.0.tgz#ca4b284de9dffb255288c76a44870b360faf14f9"
+  integrity sha512-s6ceX0NFiU/vKPiKvFdR83U1Zffu7upwZsGwpoqfg5rbbq1l50WQ5hCeIvM6E6oD4shUHCYMsiFPns4Jk0YfMQ==
+
 esutils@^2.0.2:
   version "2.0.3"
   resolved "https://registry.yarnpkg.com/esutils/-/esutils-2.0.3.tgz#74d2eb4de0b8da1293711910d50775b9b710ef64"
@@ -5623,12 +5628,12 @@ pend@~1.2.0:
   resolved "https://registry.yarnpkg.com/pend/-/pend-1.2.0.tgz#7a57eb550a6783f9115331fcf4663d5c8e007a50"
   integrity sha1-elfrVQpng/kRUzH89GY9XI4AelA=
 
-periscopic@^2.0.3:
-  version "2.0.3"
-  resolved "https://registry.yarnpkg.com/periscopic/-/periscopic-2.0.3.tgz#326e16c46068172ca9a9d20af1a684cd0796fa99"
-  integrity sha512-FuCZe61mWxQOJAQFEfmt9FjzebRlcpFz8sFPbyaCKtdusPkMEbA9ey0eARnRav5zAhmXznhaQkKGFAPn7X9NUw==
+periscopic@^3.0.2:
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/periscopic/-/periscopic-3.0.2.tgz#f3a8965dc2cffec8e5bd22bb74f8b00404e39f3e"
+  integrity sha512-tikfSnGDCk8Ch40MyW3bUi5wt/LoMSKyojv+8WkAyhmhao248H4h/zNzvABjibM/YXxQXJ54FHBgWlFjgt7JvQ==
   dependencies:
-    estree-walker "^2.0.2"
+    estree-walker "^3.0.0"
     is-reference "^1.1.4"
 
 phoenix@^1.5.7:
