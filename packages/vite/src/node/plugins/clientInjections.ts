@@ -2,7 +2,7 @@ import path from 'path'
 import { Plugin } from '../plugin'
 import { ResolvedConfig } from '../config'
 import { CLIENT_ENTRY, ENV_ENTRY } from '../constants'
-import { normalizePath } from '../utils'
+import { isExternalUrl, normalizePath } from '../utils'
 
 // ids in transform are normalized to unix style
 const normalizedClientEntry = normalizePath(CLIENT_ENTRY)
@@ -34,9 +34,9 @@ export function clientInjectionsPlugin(config: ResolvedConfig): Plugin {
         }
         let hmrBase = config.base
         if (options.path) {
-          hmrBase = path.posix.join(hmrBase, options.path)
+          hmrBase = hmrBase + options.path
         }
-        if (hmrBase !== '/') {
+        if (hmrBase !== '/' && !isExternalUrl(hmrBase)) {
           port = path.posix.normalize(`${port}${hmrBase}`)
         }
 

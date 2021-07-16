@@ -138,7 +138,7 @@ const devHtmlHook: IndexHtmlTransformHook = async (
         tag: 'script',
         attrs: {
           type: 'module',
-          src: path.posix.join(base, CLIENT_PUBLIC_PATH)
+          src: base + CLIENT_PUBLIC_PATH.slice(1)
         },
         injectTo: 'head-prepend'
       }
