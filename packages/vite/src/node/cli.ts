@@ -1,10 +1,12 @@
 import { cac } from 'cac'
 import chalk from 'chalk'
 import { BuildOptions } from './build'
-import { ServerOptions } from './server'
+import { ServerOptions, ViteDevServer } from './server'
 import { createLogger, LogLevel } from './logger'
 import { resolveConfig } from '.'
 import { preview } from './preview'
+import { restartServer } from './server/hmr'
+import { openBrowser, resolveBrowserUrl } from './server/openBrowser'
 
 const cli = cac('vite')
 
@@ -50,6 +52,52 @@ function cleanOptions(options: GlobalCLIOptions) {
   return ret
 }
 
+export interface Shortcut {
+  name: string
+  desc: string
+  action(server: ViteDevServer): void
+}
+
+export const SHORTCUTS: Shortcut[] = [
+  {
+    name: 'r',
+    desc: 'restart',
+    action(server: ViteDevServer): void {
+      restartServer(server)
+    }
+  },
+  {
+    name: 'o',
+    desc: 'open browser',
+    action(server: ViteDevServer): void {
+      openBrowser(resolveBrowserUrl(server), true, server.config.logger)
+    }
+  },
+  {
+    name: 'f',
+    desc: 'force restart',
+    action(server: ViteDevServer): void {
+      restartServer(server, true)
+    }
+  }
+]
+
+function bindShortcut(server: ViteDevServer) {
+  process.stdin.resume()
+  process.stdin.setEncoding('utf8')
+  process.stdin.on('data', (data) => {
+    const str = data.toString().trim().toLowerCase()
+    const sh = SHORTCUTS.filter((item) => item.name === str)[0]
+    if (sh) {
+      sh.action(server)
+    } else {
+      createLogger(server.config.logLevel).error(
+        chalk.red(`Invalid ShortCut: ${str}`)
+      )
+    }
+  })
+}
+
 cli
   .option('-c, --config <file>', `[string] use specified config file`)
   .option('-r, --root <path>', `[string] use specified root directory`)
@@ -89,6 +137,7 @@ cli
         server: cleanOptions(options) as ServerOptions
       })
       await server.listen()
+      bindShortcut(server)
     } catch (e) {
       createLogger(options.logLevel).error(
         chalk.red(`error when starting dev server:\n${e.stack}`)
@@ -232,6 +281,6 @@ cli
   )
 
 cli.help()
-cli.version(require('../../package.json').version)
+cli.version(require('vite/package.json').version)
 
 cli.parse()
