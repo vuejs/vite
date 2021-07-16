@@ -127,6 +127,37 @@ export async function untilUpdated(
   }
 }
 
+export async function autoRetry(
+  test: () => void | Promise<void>
+): Promise<void> {
+  const timeout = 60 * 1000
+  const period = 100
+  const numberOfTries = timeout / period
+  let i = 0
+  while (true) {
+    try {
+      await test()
+      return
+    } catch (err) {
+      i = i + 1
+      if (i > numberOfTries) {
+        throw err
+      }
+    }
+    await sleep(period)
+  }
+
+  return
+
+  function sleep(milliseconds: number): Promise<void> {
+    return new Promise((resolve) =>
+      setTimeout(() => {
+        resolve()
+      }, milliseconds)
+    )
+  }
+}
+
 /**
  * Send the rebuild complete message in build watch
  */

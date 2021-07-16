@@ -1,0 +1,18 @@
+{
+  "name": "vue-framework",
+  "version": "1.0.0",
+  "main": "index.js",
+  "bin": {
+    "vue-framework": "bin/vue-framework.js"
+  },
+  "peerDependencies": {
+    "@vue/compiler-sfc": "^3.0.8",
+    "@vue/server-renderer": "^3.0.6",
+    "vue": "^3.0.8"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^1.0.0",
+    "@vitejs/plugin-vue-jsx": "^1.1.2",
+    "express": "^4.17.1"
+  }
+}
