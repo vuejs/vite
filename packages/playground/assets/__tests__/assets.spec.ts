@@ -17,10 +17,11 @@ const assetMatch = isBuild
 
 const iconMatch = `/foo/icon.png`
 
-test('should have no 404s', () => {
-  browserLogs.forEach((msg) => {
-    expect(msg).not.toMatch('404')
-  })
+test('detect 404s', () => {
+  // Only got a 404 from `.preserve-invalid-dir` in build mode
+  expect(browserLogs.filter((msg) => msg.includes('404')).length).toBe(
+    isBuild ? 1 : 0
+  )
 })
 
 describe('injected scripts', () => {
@@ -145,6 +146,14 @@ describe('image', () => {
           : /\.\/nested\/asset\.png \d{1}x/
       )
     })
+  })
+
+  test('dir', async () => {
+    const img = await page.$('.preserve-invalid-dir')
+    const src = await img.getAttribute('src')
+    const srcset = await img.getAttribute('srcset')
+    expect(src).toBe('./nested')
+    expect(srcset).toBe('./nested 1x, ./nested/ 2x')
   })
 })
 
