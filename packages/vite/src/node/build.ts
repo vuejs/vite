@@ -40,6 +40,7 @@ import { isCSSRequest } from './plugins/css'
 import { DepOptimizationMetadata } from './optimizer'
 import { scanImports } from './optimizer/scan'
 import { assetImportMetaUrlPlugin } from './plugins/assetImportMetaUrl'
+import * as chokidar from 'chokidar'
 
 export interface BuildOptions {
   /**
@@ -502,8 +503,48 @@ async function doBuild(
         }
       })
 
-      // stop watching
-      watcher.close()
+      if (config.configFile) {
+        const configWatcher = chokidar.watch(config.configFile, {
+          ignoreInitial: true
+        })
+        type Watcher = RollupWatcher & {
+          firstWatcher?: RollupWatcher
+        }
+        const lastWatcher = watcher as Watcher
+        lastWatcher.once('close', () => {
+          configWatcher.close()
+        })
+        configWatcher.once('change', () => {
+          lastWatcher.close()
+
+          // Let the last watcher close this watcher before
+          // it's been initialized.
+          let closed = false
+          lastWatcher.close = () => {
+            closed = true
+          }
+
+          // Reload the config and create another watcher.
+          const watcherPromise = doBuild(inlineConfig) as Promise<Watcher>
+
+          watcherPromise.then((watcher) => {
+            if (closed) {
+              return watcher.close()
+            }
+
+            // Let the first watcher close this watcher.
+            const { firstWatcher = lastWatcher } = lastWatcher
+            firstWatcher.close = () => watcher.close()
+
+            // Ensure the last watcher always has a reference to the first watcher.
+            watcher.firstWatcher = firstWatcher
+          })
+
+          watcherPromise.catch((error) => {
+            process.emit('uncaughtException', error)
+          })
+        })
+      }
 
       return watcher
     }
