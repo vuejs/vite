@@ -606,7 +606,11 @@ async function compileCSS(
   const postcssPlugins =
     postcssConfig && postcssConfig.plugins ? postcssConfig.plugins.slice() : []
 
-  if (needInlineImport) {
+  const hasImportPlugin = postcssPlugins.some(
+    (plugin) => plugin.postcssPlugin === 'postcss-import'
+  )
+
+  if (needInlineImport && !hasImportPlugin) {
     postcssPlugins.unshift(
       (await import('postcss-import')).default({
         async resolve(id, basedir) {
