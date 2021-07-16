@@ -15,6 +15,19 @@ export const DEFAULT_EXTENSIONS = [
   '.json'
 ]
 
+// warning, these are only default values. At runtime you must check config.knownJsSrcExtensions
+export const DEFAULT_KNOWN_JS_SRC_EXTENSIONS = [
+  '.js',
+  '.ts',
+  '.jsx',
+  '.tsx',
+  '.mjs',
+  // the extensions below should be removed once their respective plugins add them via config hook
+  '.vue',
+  '.marko',
+  '.svelte'
+]
+
 export const JS_TYPES_RE = /\.(?:j|t)sx?$|\.mjs$/
 
 export const OPTIMIZABLE_ENTRY_RE = /\.(?:m?js|ts)$/

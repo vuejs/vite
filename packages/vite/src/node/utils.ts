@@ -106,16 +106,13 @@ export const isExternalUrl = (url: string): boolean => externalRE.test(url)
 export const dataUrlRE = /^\s*data:/i
 export const isDataUrl = (url: string): boolean => dataUrlRE.test(url)
 
-const knownJsSrcRE = /\.((j|t)sx?|mjs|vue|marko|svelte)($|\?)/
-export const isJSRequest = (url: string): boolean => {
+export const isJSRequest = (
+  url: string,
+  knownJSSrcExtensions: string[]
+): boolean => {
   url = cleanUrl(url)
-  if (knownJsSrcRE.test(url)) {
-    return true
-  }
-  if (!path.extname(url) && !url.endsWith('/')) {
-    return true
-  }
-  return false
+  const ext = path.extname(url)
+  return ext ? knownJSSrcExtensions.includes(ext) : !url.endsWith('/')
 }
 
 const importQueryRE = /(\?|&)import=?(?:&|$)/

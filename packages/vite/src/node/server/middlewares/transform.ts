@@ -39,7 +39,7 @@ export function transformMiddleware(
   server: ViteDevServer
 ): Connect.NextHandleFunction {
   const {
-    config: { root, logger, cacheDir },
+    config: { root, logger, cacheDir, knownJsSrcExtensions },
     moduleGraph
   } = server
 
@@ -132,7 +132,7 @@ export function transformMiddleware(
       }
 
       if (
-        isJSRequest(url) ||
+        isJSRequest(url, knownJsSrcExtensions) ||
         isImportRequest(url) ||
         isCSSRequest(url) ||
         isHTMLProxy(url)

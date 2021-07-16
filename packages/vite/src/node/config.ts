@@ -21,7 +21,11 @@ import { ESBuildOptions } from './plugins/esbuild'
 import dotenv from 'dotenv'
 import dotenvExpand from 'dotenv-expand'
 import { Alias, AliasOptions } from 'types/alias'
-import { CLIENT_DIR, DEFAULT_ASSETS_RE } from './constants'
+import {
+  CLIENT_DIR,
+  DEFAULT_ASSETS_RE,
+  DEFAULT_KNOWN_JS_SRC_EXTENSIONS
+} from './constants'
 import {
   InternalResolveOptions,
   ResolveOptions,
@@ -130,6 +134,13 @@ export interface UserConfig {
    */
   assetsInclude?: string | RegExp | (string | RegExp)[]
   /**
+   * Specify additional extensions to be treated as sources of js modules
+   * requires plugins to be installed that transform the extensions!
+   *
+   * Plugin authors should set this with the config hook
+   */
+  knownJsSrcExtensions?: string[]
+  /**
    * Server specific options, e.g. host, port, https...
    */
   server?: ServerOptions
@@ -195,7 +206,12 @@ export interface InlineConfig extends UserConfig {
 export type ResolvedConfig = Readonly<
   Omit<
     UserConfig,
-    'plugins' | 'alias' | 'dedupe' | 'assetsInclude' | 'optimizeDeps'
+    | 'plugins'
+    | 'alias'
+    | 'dedupe'
+    | 'assetsInclude'
+    | 'optimizeDeps'
+    | 'knownJsSrcExtensions'
   > & {
     configFile: string | undefined
     configFileDependencies: string[]
@@ -214,6 +230,7 @@ export type ResolvedConfig = Readonly<
     server: ResolvedServerOptions
     build: ResolvedBuildOptions
     assetsInclude: (file: string) => boolean
+    knownJsSrcExtensions: string[]
     logger: Logger
     createResolver: (options?: Partial<InternalResolveOptions>) => ResolveFn
     optimizeDeps: Omit<DepOptimizationOptions, 'keepNames'>
@@ -270,6 +287,11 @@ export async function resolveConfig(
 
   // user config may provide an alternative mode
   mode = config.mode || mode
+
+  // user config may provide alternative default known js src extensions
+  if (!config.knownJsSrcExtensions) {
+    config.knownJsSrcExtensions = [...DEFAULT_KNOWN_JS_SRC_EXTENSIONS]
+  }
 
   // resolve plugins
   const rawUserPlugins = (config.plugins || []).flat().filter((p) => {
@@ -391,6 +413,15 @@ export async function resolveConfig(
         )
       : ''
 
+  //ensure leading dot and deduplicate
+  const resolvedKnownJsSrcExtensions = [
+    ...new Set(
+      config.knownJsSrcExtensions?.map((ext) =>
+        ext.startsWith('.') ? ext : `.${ext}`
+      )
+    )
+  ]
+
   const resolved: ResolvedConfig = {
     ...config,
     configFile: configFile ? normalizePath(configFile) : undefined,
@@ -417,6 +448,7 @@ export async function resolveConfig(
     assetsInclude(file: string) {
       return DEFAULT_ASSETS_RE.test(file) || assetsFilter(file)
     },
+    knownJsSrcExtensions: resolvedKnownJsSrcExtensions,
     logger,
     createResolver,
     optimizeDeps: {

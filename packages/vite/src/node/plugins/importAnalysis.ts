@@ -48,12 +48,12 @@ const clientDir = normalizePath(CLIENT_DIR)
 const skipRE = /\.(map|json)$/
 const canSkip = (id: string) => skipRE.test(id) || isDirectCSSRequest(id)
 
-function isExplicitImportRequired(url: string) {
-  return !isJSRequest(cleanUrl(url)) && !isCSSRequest(url)
+function isExplicitImportRequired(url: string, knownJSSrcExtensions: string[]) {
+  return !isJSRequest(url, knownJSSrcExtensions) && !isCSSRequest(url)
 }
 
-function markExplicitImport(url: string) {
-  if (isExplicitImportRequired(url)) {
+function markExplicitImport(url: string, knownJSSrcExtensions: string[]) {
+  if (isExplicitImportRequired(url, knownJSSrcExtensions)) {
     return injectQuery(url, 'import')
   }
   return url
@@ -89,7 +89,7 @@ function markExplicitImport(url: string) {
  *     ```
  */
 export function importAnalysisPlugin(config: ResolvedConfig): Plugin {
-  const { root, base } = config
+  const { root, base, knownJsSrcExtensions } = config
   const clientPublicPath = path.posix.join(base, CLIENT_PUBLIC_PATH)
 
   let server: ViteDevServer
@@ -120,7 +120,7 @@ export function importAnalysisPlugin(config: ResolvedConfig): Plugin {
         imports = parseImports(source)[0]
       } catch (e) {
         const isVue = importer.endsWith('.vue')
-        const maybeJSX = !isVue && isJSRequest(importer)
+        const maybeJSX = !isVue && isJSRequest(importer, knownJsSrcExtensions)
 
         const msg = isVue
           ? `Install @vitejs/plugin-vue to handle .vue files.`
@@ -217,7 +217,7 @@ export function importAnalysisPlugin(config: ResolvedConfig): Plugin {
         // make the URL browser-valid if not SSR
         if (!ssr) {
           // mark non-js/css imports with `?import`
-          url = markExplicitImport(url)
+          url = markExplicitImport(url, knownJsSrcExtensions)
 
           // for relative js/css imports, inherit importer's version query
           // do not do this for unknown type imports, otherwise the appended
@@ -421,7 +421,7 @@ export function importAnalysisPlugin(config: ResolvedConfig): Plugin {
           }
           if (
             !/^('.*'|".*"|`.*`)$/.test(url) ||
-            isExplicitImportRequired(url.slice(1, -1))
+            isExplicitImportRequired(url.slice(1, -1), knownJsSrcExtensions)
           ) {
             needQueryInjectHelper = true
             str().overwrite(start, end, `__vite__injectQuery(${url}, 'import')`)
@@ -476,7 +476,7 @@ export function importAnalysisPlugin(config: ResolvedConfig): Plugin {
       const normalizedAcceptedUrls = new Set<string>()
       for (const { url, start, end } of acceptedUrls) {
         const [normalized] = await moduleGraph.resolveUrl(
-          toAbsoluteUrl(markExplicitImport(url))
+          toAbsoluteUrl(markExplicitImport(url, knownJsSrcExtensions))
         )
         normalizedAcceptedUrls.add(normalized)
         str().overwrite(start, end, JSON.stringify(normalized))
