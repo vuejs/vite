@@ -282,9 +282,14 @@ function walk(
       } else if (isFunction(node)) {
         // walk function expressions and add its arguments to known identifiers
         // so that we don't prefix them
-        node.params.forEach((p) =>
-          (eswalk as any)(p, {
+        node.params.forEach((p) => {
+          const paramParentStack: Node[] = []
+
+          ;(eswalk as any)(p, {
             enter(child: Node, parent: Node) {
+              parent && paramParentStack.push(parent)
+
+              const grandparent = paramParentStack[paramParentStack.length - 2]
               if (
                 child.type === 'Identifier' &&
                 // do not record as scope variable if is a destructuring key
@@ -293,15 +298,23 @@ function walk(
                 // assignment of a destructuring variable
                 !(
                   parent &&
-                  parent.type === 'AssignmentPattern' &&
-                  parent.right === child
+                  ((parent.type === 'AssignmentPattern' &&
+                    parent.right === child) ||
+                    (parent.type === 'CallExpression' &&
+                      grandparent?.type === 'AssignmentPattern' &&
+                      grandparent?.right === parent &&
+                      parent.callee === child))
                 )
               ) {
                 setScope(node, child.name)
               }
+            },
+
+            leave(node: Node, parent: Node | null) {
+              parent && paramParentStack.pop()
             }
           })
-        )
+        })
       } else if (node.type === 'Property' && parent!.type === 'ObjectPattern') {
         // mark property in destructuring pattern
         ;(node as any).inPattern = true
