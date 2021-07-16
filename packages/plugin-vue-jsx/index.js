@@ -129,7 +129,6 @@ function vueJsxPlugin(options = {}) {
          * }[]}
          */
         const hotComponents = []
-        let hasDefault = false
 
         for (const node of result.ast.program.body) {
           if (node.type === 'VariableDeclaration') {
@@ -188,9 +187,16 @@ function vueJsxPlugin(options = {}) {
                 })
               }
             } else if (isDefineComponentCall(node.declaration)) {
-              hasDefault = true
+              // the local is from '/abc/def/about-123.abc.tsx' to '__default_about_123_abc'
+              const local = '__default' + id.slice(...['/', '.'].map(word => id.lastIndexOf(word))).replace(/(\W)/g, '_')
+              if (needHmr || ssr) {
+                result.code = result.code.replace(
+                    /export default defineComponent/g,
+                    `const ${local} = defineComponent`
+                  ) + `\nexport default ${local}`
+              }
               hotComponents.push({
-                local: '__default__',
+                local,
                 exported: 'default',
                 id: hash(id + 'default')
               })
