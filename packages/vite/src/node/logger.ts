@@ -43,14 +43,18 @@ function clearScreen() {
 export interface LoggerOptions {
   prefix?: string
   allowClearScreen?: boolean
+  logger?: Logger
 }
 
 export function createLogger(
   level: LogLevel = 'info',
   options: LoggerOptions = {}
 ): Logger {
+  if (options.logger) {
+    return options.logger
+  }
+  
   const { prefix = '[vite]', allowClearScreen = true } = options
-
   const thresh = LogLevels[level]
   const clear =
     allowClearScreen && process.stdout.isTTY && !process.env.CI
