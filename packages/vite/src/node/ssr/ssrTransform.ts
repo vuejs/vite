@@ -1,4 +1,5 @@
 import MagicString from 'magic-string'
+import path from 'path'
 import { SourceMap } from 'rollup'
 import { TransformResult } from '../server/transformRequest'
 import { parser } from '../server/pluginContainer'
@@ -37,17 +38,31 @@ export async function ssrTransform(
     locations: true
   }) as any
 
-  let uid = 0
   const deps = new Set<string>()
   const idToImportMap = new Map<string, string>()
   const declaredConst = new Set<string>()
+  const usedNames = new Set<string>()
+
+  function findFreeName(name: string) {
+    let suffix = 0
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const usedName = ++suffix > 1 ? `${name}_${suffix}` : name
+      if (!usedNames.has(usedName)) {
+        usedNames.add(usedName)
+        return usedName
+      }
+    }
+  }
 
   function defineImport(node: Node, source: string) {
     deps.add(source)
-    const importId = `__vite_ssr_import_${uid++}__`
+    const importId = findFreeName(
+      `import_` + path.basename(source, path.extname(source)).replace(/\W/g, '')
+    )
     s.appendLeft(
       node.start,
-      `const ${importId} = ${ssrImportKey}(${JSON.stringify(source)})\n`
+      `const ${importId} = ${ssrImportKey}(${JSON.stringify(source)});`
     )
     return importId
   }
