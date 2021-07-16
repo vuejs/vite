@@ -22,6 +22,10 @@ export interface Options {
    * default: true
    */
   renderLegacyChunks?: boolean
+  /**
+   * default: http
+   */
+  protocol?: 'file' | 'http'
 }
 
 declare function createPlugin(options?: Options): Plugin

@@ -31,6 +31,7 @@ function viteLegacyPlugin(options = {}) {
   let config
   const targets = options.targets || 'defaults'
   const genLegacy = options.renderLegacyChunks !== false
+  const isFileProtocol = options.protocol === 'file'
 
   const debugFlag = process.env.DEBUG
   const isDebug = debugFlag === 'vite:*' || debugFlag === 'vite:legacy'
@@ -323,7 +324,7 @@ function viteLegacyPlugin(options = {}) {
       const modernPolyfillFilename = facadeToModernPolyfillMap.get(
         chunk.facadeModuleId
       )
-      if (modernPolyfillFilename) {
+      if (modernPolyfillFilename && !isFileProtocol) {
         tags.push({
           tag: 'script',
           attrs: {
@@ -344,7 +345,7 @@ function viteLegacyPlugin(options = {}) {
       // 2. inject Safari 10 nomodule fix
       tags.push({
         tag: 'script',
-        attrs: { nomodule: true },
+        attrs: isFileProtocol ? {} : { nomodule: true },
         children: safari10NoModuleFix,
         injectTo: 'body'
       })
@@ -357,7 +358,7 @@ function viteLegacyPlugin(options = {}) {
         tags.push({
           tag: 'script',
           attrs: {
-            nomodule: true,
+            ...(isFileProtocol ? {} : { nomodule: true }),
             src: `${config.base}${legacyPolyfillFilename}`
           },
           injectTo: 'body'
@@ -376,7 +377,7 @@ function viteLegacyPlugin(options = {}) {
         tags.push({
           tag: 'script',
           attrs: {
-            nomodule: true,
+            ...(isFileProtocol ? {} : { nomodule: true }),
             // we set the entry path on the element as an attribute so that the
             // script content will stay consistent - which allows using a constant
             // hash value for CSP.
@@ -393,7 +394,7 @@ function viteLegacyPlugin(options = {}) {
       }
 
       return {
-        html,
+        html: isFileProtocol ? html.replace(/<script[\s\S]*js">/g, '') : html,
         tags
       }
     },
