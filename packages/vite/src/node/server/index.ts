@@ -331,8 +331,9 @@ export async function createServer(
 
   const plugins = config.plugins
   const container = await createPluginContainer(config, watcher)
-  const moduleGraph = new ModuleGraph(container)
+  const moduleGraph = new ModuleGraph(container, config, watcher)
   const closeHttpServer = createServerCloseFn(httpServer)
+  await moduleGraph.loadCache()
 
   // eslint-disable-next-line prefer-const
   let exitProcess: () => void
@@ -387,7 +388,8 @@ export async function createServer(
         watcher.close(),
         ws.close(),
         container.close(),
-        closeHttpServer()
+        closeHttpServer(),
+        moduleGraph.saveCache()
       ])
     },
     _optimizeDepsMetadata: null,

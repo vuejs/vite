@@ -124,6 +124,7 @@ export async function transformRequest(
   // ensure module in graph after successful load
   const mod = await moduleGraph.ensureEntryFromUrl(url)
   ensureWatchedFile(watcher, mod.file, root)
+  mod.sourceEtag = getEtag(code, { weak: true })
 
   // transform
   const transformStart = isDebug ? Date.now() : 0

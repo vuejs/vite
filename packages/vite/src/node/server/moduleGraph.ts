@@ -1,15 +1,22 @@
-import { extname } from 'path'
+import fs from 'fs'
+import path, { extname } from 'path'
+import getEtag from 'etag'
 import { isDirectCSSRequest } from '../plugins/css'
 import {
   cleanUrl,
+  createDebugger,
+  ensureWatchedFile,
   normalizePath,
   removeImportQuery,
-  removeTimestampQuery
+  removeTimestampQuery,
+  timeFrom
 } from '../utils'
-import { FS_PREFIX } from '../constants'
+import { CLIENT_PUBLIC_PATH, FS_PREFIX } from '../constants'
+import { ResolvedConfig } from '../config'
 import { TransformResult } from './transformRequest'
 import { PluginContainer } from './pluginContainer'
 import { parse as parseUrl } from 'url'
+import { FSWatcher } from 'chokidar'
 
 export class ModuleNode {
   /**
@@ -30,12 +37,24 @@ export class ModuleNode {
   ssrTransformResult: TransformResult | null = null
   ssrModule: Record<string, any> | null = null
   lastHMRTimestamp = 0
+  sourceEtag: string | null = null
 
   constructor(url: string) {
     this.url = url
     this.type = isDirectCSSRequest(url) ? 'css' : 'js'
   }
 }
+
+type CacheFormat = {
+  [key: string]: {
+    etag: string
+    transformResult: TransformResult | null
+    ssrTransformResult: TransformResult | null
+  }
+}
+
+const isDebug = !!process.env.DEBUG
+const debugModuleGraph = createDebugger('vite:moduleGraph')
 
 function invalidateSSRModule(mod: ModuleNode, seen: Set<ModuleNode>) {
   if (seen.has(mod)) {
@@ -52,9 +71,17 @@ export class ModuleGraph {
   fileToModulesMap = new Map<string, Set<ModuleNode>>()
   safeModulesPath = new Set<string>()
   container: PluginContainer
+  config: ResolvedConfig
+  watcher: FSWatcher
 
-  constructor(container: PluginContainer) {
+  constructor(
+    container: PluginContainer,
+    config: ResolvedConfig,
+    watcher: FSWatcher
+  ) {
     this.container = container
+    this.config = config
+    this.watcher = watcher
   }
 
   async getModuleByUrl(rawUrl: string): Promise<ModuleNode | undefined> {
@@ -196,5 +223,87 @@ export class ModuleGraph {
       url = pathname + ext + (search || '') + (hash || '')
     }
     return [url, resolvedId]
+  }
+
+  async loadCache(): Promise<void> {
+    const start = isDebug ? Date.now() : 0
+    const cacheLocation = this.getCacheLocation()
+    if (!cacheLocation) {
+      isDebug && debugModuleGraph('Cache disabled, loadCache skipped')
+      return
+    }
+    if (!fs.existsSync(cacheLocation)) {
+      isDebug && debugModuleGraph('Cache not found')
+      return
+    }
+    const cache: CacheFormat = JSON.parse(
+      fs.readFileSync(cacheLocation, { encoding: 'utf-8' })
+    )
+    for (const [url, value] of Object.entries(cache)) {
+      const id = (await this.container.resolveId(url))?.id || url
+      let loadResult = await this.container.load(id)
+      if (!loadResult) {
+        try {
+          loadResult = await fs.promises.readFile(id, 'utf-8')
+        } catch (e) {
+          if (e.code !== 'ENOENT') throw e
+        }
+      }
+      if (!loadResult) {
+        isDebug && debugModuleGraph(`Module ${url} not found`)
+        continue
+      }
+      const code = typeof loadResult === 'object' ? loadResult.code : loadResult
+      if (getEtag(code, { weak: true }) !== value.etag) {
+        isDebug && debugModuleGraph(`Module ${url} changed`)
+        continue
+      }
+      const module = await this.ensureEntryFromUrl(url)
+      ensureWatchedFile(this.watcher, module.file, this.config.root)
+      module.sourceEtag = value.etag
+      module.transformResult = value.transformResult
+      module.ssrTransformResult = value.ssrTransformResult
+    }
+    isDebug &&
+      debugModuleGraph(
+        timeFrom(start),
+        `${this.urlToModuleMap.size}/${
+          Object.keys(cache).length
+        } modules restored`
+      )
+  }
+
+  async saveCache(): Promise<void> {
+    const start = isDebug ? Date.now() : 0
+    const cacheLocation = this.getCacheLocation()
+    if (!cacheLocation) return
+    const cache: CacheFormat = {}
+    this.urlToModuleMap.forEach((module, url) => {
+      if (
+        !module.sourceEtag ||
+        url.includes('node_modules') ||
+        url.startsWith(FS_PREFIX) ||
+        url.startsWith(CLIENT_PUBLIC_PATH)
+      ) {
+        return
+      }
+      cache[url] = {
+        etag: module.sourceEtag,
+        transformResult: module.transformResult,
+        ssrTransformResult: null
+      }
+    })
+    fs.writeFileSync(cacheLocation, JSON.stringify(cache))
+    isDebug &&
+      debugModuleGraph(
+        timeFrom(start),
+        `${Object.keys(cache).length}/${this.urlToModuleMap.size} modules saved`
+      )
+  }
+
+  private getCacheLocation() {
+    if (!this.config.cacheTransformations) return
+    if (!this.config.cacheDir) return
+    return path.resolve(this.config.cacheDir, 'transformations.json')
   }
 }
