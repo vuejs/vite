@@ -346,22 +346,40 @@ export function buildHtmlPlugin(config: ResolvedConfig): Plugin {
 
         // inject chunk asset links
         if (chunk) {
-          const assetTags = [
+          const assetTags = []
+
+          if (
+            chunk.imports.length ||
+            Object.entries(chunk.modules).some(
+              ([id, mod]) =>
+                id !== 'vite/dynamic-import-polyfill' &&
+                mod.renderedLength &&
+                !this.getModuleInfo(id)?.meta.css
+            )
+          ) {
             // js entry chunk for this page
-            {
+            assetTags.push({
               tag: 'script',
               attrs: {
                 type: 'module',
                 crossorigin: true,
                 src: toPublicPath(chunk.fileName, config)
               }
-            },
+            })
+          } else {
+            // entry js chunk was effectively empty, prevent rollup outputting it
+            delete bundle[chunk.fileName]
+          }
+
+          assetTags.push(
             // preload for imports
             ...getPreloadLinksForChunk(chunk),
             ...getCssTagsForChunk(chunk)
-          ]
+          )
 
-          result = injectToHead(result, assetTags)
+          if (assetTags.length) {
+            result = injectToHead(result, assetTags)
+          }
         }
 
         // inject css link when cssCodeSplit is false

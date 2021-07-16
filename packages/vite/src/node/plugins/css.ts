@@ -281,6 +281,7 @@ export function cssPostPlugin(config: ResolvedConfig): Plugin {
       return {
         code: modulesCode || `export default ${JSON.stringify(css)}`,
         map: { mappings: '' },
+        meta: { css: true },
         // avoid the css module from being tree-shaken so that we can retrieve
         // it in renderChunk()
         moduleSideEffects: 'no-treeshake'
