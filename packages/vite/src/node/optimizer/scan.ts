@@ -282,9 +282,11 @@ function esbuildScanPlugin(
               }
               return externalUnlessEntry({ path: id })
             } else {
+              const namespace = htmlTypesRE.test(resolved) ? 'html' : undefined
               // linked package, keep crawling
               return {
-                path: path.resolve(resolved)
+                path: path.resolve(resolved),
+                namespace
               }
             }
           } else {
