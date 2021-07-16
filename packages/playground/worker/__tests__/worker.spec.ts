@@ -64,6 +64,6 @@ if (isBuild) {
     expect(content).toMatch(`new Worker("/assets`)
     expect(content).toMatch(`new SharedWorker("/assets`)
     // inlined
-    expect(content).toMatch(`(window.URL||window.webkitURL).createObjectURL`)
+    expect(content).toMatch(`.createObjectURL(`)
   })
 }
