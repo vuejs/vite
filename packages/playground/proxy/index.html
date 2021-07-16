@@ -1,0 +1,10 @@
+<div class="app"></div>
+<script type="module">
+  fetch('/v1/get')
+    .then(function (response) {
+      return response.json()
+    })
+    .then(function (json) {
+      document.querySelector('.app').textContent = json.key
+    })
+</script>

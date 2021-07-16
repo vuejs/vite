@@ -401,7 +401,13 @@ export default async ({ command, mode }) => {
         '/api': {
           target: 'http://jsonplaceholder.typicode.com',
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/api/, '')
+          rewrite: (path) => path.replace(/^\/api/, ''),
+          // change target
+          router: (req) => {
+            if (req.url.indexOf('third') > -1) {
+              return 'http://your-mock-server.com'
+            }
+          }
         },
         // with RegEx
         '^/fallback/.*': {
