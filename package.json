@@ -10,7 +10,7 @@
   },
   "scripts": {
     "format": "prettier --write .",
-    "lint": "eslint --ext .js,.ts packages/*/src/**",
+    "lint": "eslint packages/*/{src,types}/**",
     "test": "run-s test-serve test-build",
     "test-serve": "jest",
     "debug-serve": "cross-env VITE_DEBUG_SERVE=1 node --inspect-brk ./node_modules/.bin/jest",
@@ -59,19 +59,18 @@
     "yorkie": "^2.0.0"
   },
   "gitHooks": {
-    "pre-commit": "lint-staged",
+    "pre-commit": "lint-staged --concurrent false",
     "commit-msg": "node scripts/verifyCommit.js"
   },
   "lint-staged": {
-    "*.js": [
+    "*": [
       "prettier --write"
     ],
-    "*.ts": [
-      "eslint",
-      "prettier --parser=typescript --write"
+    "packages/*/{src,types}/**/*.ts": [
+      "eslint --ext .ts"
     ],
-    "*.html": [
-      "prettier --write"
+    "packages/**/*.d.ts": [
+      "eslint --ext .ts"
     ]
   }
 }
