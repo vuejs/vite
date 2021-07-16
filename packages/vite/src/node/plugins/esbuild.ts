@@ -14,6 +14,7 @@ import { SourceMap } from 'rollup'
 import { ResolvedConfig } from '..'
 import { createFilter } from '@rollup/pluginutils'
 import { combineSourcemaps } from '../utils'
+import * as convertSourceMap from 'convert-source-map'
 
 const debug = createDebugger('vite:esbuild')
 
@@ -130,10 +131,18 @@ export const buildEsbuildPlugin = (config: ResolvedConfig): Plugin => {
       if ((!target || target === 'esnext') && !minify) {
         return null
       }
-      return transformWithEsbuild(code, chunk.fileName, {
-        target: target || undefined,
-        minify
-      })
+      return transformWithEsbuild(
+        code,
+        chunk.fileName,
+        {
+          target: target || undefined,
+          minify
+        },
+        convertSourceMap.fromSource(code) ||
+          convertSourceMap
+            .fromMapFileSource(code, path.dirname(chunk.fileName))
+            ?.toObject()
+      )
     }
   }
 }
