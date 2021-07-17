@@ -14,6 +14,8 @@ import { SourceMap } from 'rollup'
 import { ResolvedConfig } from '..'
 import { createFilter } from '@rollup/pluginutils'
 import { combineSourcemaps } from '../utils'
+import { find as findTSConfig, readFile as readTSConfig } from 'tsconfig'
+import { createRequire } from 'module'
 
 const debug = createDebugger('vite:esbuild')
 
@@ -25,6 +27,56 @@ export interface ESBuildOptions extends TransformOptions {
 
 export type ESBuildTransformResult = Omit<TransformResult, 'map'> & {
   map: SourceMap
+}
+
+type TSConfigJSON = {
+  extends?: string
+  compilerOptions?: {
+    target?: string
+    jsxFactory?: string
+    jsxFragmentFactory?: string
+    useDefineForClassFields?: boolean
+    importsNotUsedAsValues?: 'remove' | 'preserve' | 'error'
+  }
+  [key: string]: any
+}
+type TSCompilerOptions = NonNullable<TSConfigJSON['compilerOptions']>
+
+const tsconfigCache = new Map<string, TSConfigJSON>()
+async function loadTsconfigJsonForFile(
+  filename: string
+): Promise<TSConfigJSON> {
+  const directory = path.dirname(filename)
+
+  const cached = tsconfigCache.get(directory)
+  if (cached) {
+    return cached
+  }
+
+  let configPath = await findTSConfig(directory)
+  let tsconfig: TSConfigJSON = {}
+
+  if (configPath) {
+    tsconfig = (await readTSConfig(configPath)) as TSConfigJSON
+    while (tsconfig.extends) {
+      const configRequire = createRequire(configPath)
+
+      const extendsPath = configRequire.resolve(tsconfig.extends)
+      const extendedConfig = (await readTSConfig(extendsPath)) as TSConfigJSON
+
+      tsconfig = {
+        extends: extendedConfig.extends,
+        compilerOptions: {
+          ...extendedConfig.compilerOptions,
+          ...tsconfig.compilerOptions
+        }
+      }
+      configPath = extendsPath
+    }
+  }
+
+  tsconfigCache.set(directory, tsconfig)
+  return tsconfig
 }
 
 export async function transformWithEsbuild(
@@ -44,11 +96,40 @@ export async function transformWithEsbuild(
     loader = 'js'
   }
 
+  // these fields would affect the compilation result
+  // https://esbuild.github.io/content-types/#tsconfig-json
+  const meaningfulFields: Array<keyof TSCompilerOptions> = [
+    'jsxFactory',
+    'jsxFragmentFactory',
+    'useDefineForClassFields',
+    'importsNotUsedAsValues'
+  ]
+  const compilerOptionsForFile: TSCompilerOptions = {}
+  if (loader === 'ts' || loader === 'tsx') {
+    const loadedTsconfig = await loadTsconfigJsonForFile(filename)
+    const loadedCompilerOptions = loadedTsconfig.compilerOptions ?? {}
+
+    for (const field of meaningfulFields) {
+      if (field in loadedCompilerOptions) {
+        // @ts-ignore TypeScript can't tell they are of the same type
+        compilerOptionsForFile[field] = loadedCompilerOptions[field]
+      }
+    }
+
+    // align with TypeScript 4.3
+    // https://github.com/microsoft/TypeScript/pull/42663
+    if (loadedCompilerOptions.target?.toLocaleLowerCase() === 'esnext') {
+      compilerOptionsForFile.useDefineForClassFields =
+        loadedCompilerOptions.useDefineForClassFields ?? true
+    }
+  }
+
   const resolvedOptions = {
     loader: loader as Loader,
     sourcemap: true,
     // ensure source file name contains full query
     sourcefile: filename,
+    tsconfigRaw: { compilerOptions: compilerOptionsForFile },
     ...options
   } as ESBuildOptions
 
