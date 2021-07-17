@@ -1,6 +1,7 @@
 {
   "name": "vite-lit-element-starter",
   "version": "0.0.0",
+  "type": "module",
   "main": "dist/my-element.es.js",
   "exports": {
     ".": "./dist/my-element.es.js"
