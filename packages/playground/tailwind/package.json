@@ -1,0 +1,21 @@
+{
+  "name": "test-tailwind",
+  "private": true,
+  "version": "0.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "debug": "node --inspect-brk ../../vite/bin/vite",
+    "serve": "vite preview"
+  },
+  "dependencies": {
+    "autoprefixer": "^10.3.0",
+    "tailwindcss": "^2.2.4",
+    "vue": "^3.0.8"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^1.0.0",
+    "@vue/compiler-sfc": "^3.0.8",
+    "vue-router": "^4.0.10"
+  }
+}
