@@ -1,28 +1,24 @@
+const path = require('path')
 const vuePlugin = require('@vitejs/plugin-vue')
-const vueJsx = require('@vitejs/plugin-vue-jsx')
 
 /**
  * @type {import('vite').UserConfig}
  */
 module.exports = {
-  plugins: [
-    vuePlugin(),
-    vueJsx(),
-    {
-      name: 'virtual',
-      resolveId(id) {
-        if (id === '@foo') {
-          return id
-        }
-      },
-      load(id) {
-        if (id === '@foo') {
-          return `export default { msg: 'hi' }`
-        }
+  plugins: [vuePlugin()],
+  build: {
+    minify: false,
+    rollupOptions: {
+      output: {
+        // force into separate chunk to demonstrate
+        manualChunks: process.env.SSR
+          ? undefined
+          : (id, { getModuleInfo }) => {
+              if (id.includes('static-import')) {
+                return 'static-import'
+              }
+            }
       }
     }
-  ],
-  build: {
-    minify: false
   }
 }

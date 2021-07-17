@@ -7,8 +7,8 @@
     "build": "yarn build:client && yarn build:server",
     "build:noExternal": "yarn build:client && yarn build:server:noExternal",
     "build:client": "vite build --ssrManifest --outDir dist/client",
-    "build:server": "vite build --ssr src/entry-server.js --outDir dist/server",
-    "build:server:noExternal": "vite build --config vite.config.noexternal.js --ssr src/entry-server.js --outDir dist/server",
+    "build:server": "SSR=1 vite build --ssr src/entry-server.js --outDir dist/server",
+    "build:server:noExternal": "SSR=1 vite build --config vite.config.noexternal.js --ssr src/entry-server.js --outDir dist/server",
     "generate": "vite build --ssrManifest --outDir dist/static && yarn build:server && node prerender",
     "serve": "cross-env NODE_ENV=production node server",
     "debug": "node --inspect-brk server"

@@ -13,6 +13,13 @@ export function ssrManifestPlugin(config: ResolvedConfig): Plugin {
   return {
     name: 'vite:manifest',
     generateBundle(_options, bundle) {
+      const staticImportsMap: Record<string, string[]> = {}
+      for (const file in bundle) {
+        const chunk = bundle[file]
+        if (chunk.type === 'chunk') {
+          staticImportsMap[base + file] = chunk.imports
+        }
+      }
       for (const file in bundle) {
         const chunk = bundle[file]
         if (chunk.type === 'chunk') {
@@ -38,6 +45,12 @@ export function ssrManifestPlugin(config: ResolvedConfig): Plugin {
               assetFiles.forEach((file) => {
                 mappedChunks.push(base + file)
               })
+            }
+            // also hoist static imports from each mapped chunks
+            for (const mappedChunk of [...mappedChunks]) {
+              for (const file of staticImportsMap[mappedChunk] || []) {
+                mappedChunks.push(base + file)
+              }
             }
           }
         }
