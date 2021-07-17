@@ -190,6 +190,7 @@ cli
   .option('--port <port>', `[number] specify port`)
   .option('--https', `[boolean] use TLS + HTTP/2`)
   .option('--open [path]', `[boolean | string] open browser on startup`)
+  .option('--strictPort', `[boolean] exit if specified port is already in use`)
   .action(
     async (
       root: string,
@@ -198,6 +199,7 @@ cli
         port?: number
         https?: boolean
         open?: boolean | string
+        strictPort?: boolean
       } & GlobalCLIOptions
     ) => {
       try {
@@ -208,7 +210,8 @@ cli
             configFile: options.config,
             logLevel: options.logLevel,
             server: {
-              open: options.open
+              open: options.open,
+              strictPort: options.strictPort
             }
           },
           'serve',

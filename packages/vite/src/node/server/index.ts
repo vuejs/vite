@@ -8,7 +8,7 @@ import corsMiddleware from 'cors'
 import chalk from 'chalk'
 import { AddressInfo } from 'net'
 import chokidar from 'chokidar'
-import { resolveHttpsConfig, resolveHttpServer } from './http'
+import { resolveHttpsConfig, resolveHttpServer, httpServerStart } from './http'
 import { resolveConfig, InlineConfig, ResolvedConfig } from '../config'
 import {
   createPluginContainer,
@@ -587,85 +587,67 @@ async function startServer(
   }
 
   const options = server.config.server
-  let port = inlinePort || options.port || 3000
+  const port = inlinePort || options.port || 3000
   const hostname = resolveHostname(options.host)
 
   const protocol = options.https ? 'https' : 'http'
   const info = server.config.logger.info
   const base = server.config.base
 
-  return new Promise((resolve, reject) => {
-    const onError = (e: Error & { code?: string }) => {
-      if (e.code === 'EADDRINUSE') {
-        if (options.strictPort) {
-          httpServer.removeListener('error', onError)
-          reject(new Error(`Port ${port} is already in use`))
-        } else {
-          info(`Port ${port} is in use, trying another one...`)
-          httpServer.listen(++port, hostname.host)
-        }
-      } else {
-        httpServer.removeListener('error', onError)
-        reject(e)
-      }
-    }
-
-    httpServer.on('error', onError)
-
-    httpServer.listen(port, hostname.host, () => {
-      httpServer.removeListener('error', onError)
-
-      info(
-        chalk.cyan(`\n  vite v${require('vite/package.json').version}`) +
-          chalk.green(` dev server running at:\n`),
-        {
-          clear: !server.config.logger.hasWarned
-        }
-      )
-
-      printServerUrls(hostname, protocol, port, base, info)
-
-      // @ts-ignore
-      if (global.__vite_start_time) {
-        info(
-          chalk.cyan(
-            // @ts-ignore
-            `\n  ready in ${Date.now() - global.__vite_start_time}ms.\n`
-          )
-        )
-      }
-
-      // @ts-ignore
-      const profileSession = global.__vite_profile_session
-      if (profileSession) {
-        profileSession.post('Profiler.stop', (err: any, { profile }: any) => {
-          // Write profile to disk, upload, etc.
-          if (!err) {
-            const outPath = path.resolve('./vite-profile.cpuprofile')
-            fs.writeFileSync(outPath, JSON.stringify(profile))
-            info(
-              chalk.yellow(
-                `  CPU profile written to ${chalk.white.dim(outPath)}\n`
-              )
-            )
-          } else {
-            throw err
-          }
-        })
-      }
-
-      if (options.open && !isRestart) {
-        const path = typeof options.open === 'string' ? options.open : base
-        openBrowser(
-          `${protocol}://${hostname.name}:${port}${path}`,
-          true,
-          server.config.logger
-        )
-      }
-
-      resolve(server)
-    })
+  const serverPort = await httpServerStart(httpServer, {
+    port,
+    strictPort: options.strictPort,
+    host: hostname.host,
+    logger: server.config.logger
   })
+
+  info(
+    chalk.cyan(`\n  vite v${require('vite/package.json').version}`) +
+      chalk.green(` dev server running at:\n`),
+    {
+      clear: !server.config.logger.hasWarned
+    }
+  )
+
+  printServerUrls(hostname, protocol, serverPort, base, info)
+
+  // @ts-ignore
+  if (global.__vite_start_time) {
+    info(
+      chalk.cyan(
+        // @ts-ignore
+        `\n  ready in ${Date.now() - global.__vite_start_time}ms.\n`
+      )
+    )
+  }
+
+  // @ts-ignore
+  const profileSession = global.__vite_profile_session
+  if (profileSession) {
+    profileSession.post('Profiler.stop', (err: any, { profile }: any) => {
+      // Write profile to disk, upload, etc.
+      if (!err) {
+        const outPath = path.resolve('./vite-profile.cpuprofile')
+        fs.writeFileSync(outPath, JSON.stringify(profile))
+        info(
+          chalk.yellow(`  CPU profile written to ${chalk.white.dim(outPath)}\n`)
+        )
+      } else {
+        throw err
+      }
+    })
+  }
+
+  if (options.open && !isRestart) {
+    const path = typeof options.open === 'string' ? options.open : base
+    openBrowser(
+      `${protocol}://${hostname.name}:${serverPort}${path}`,
+      true,
+      server.config.logger
+    )
+  }
+
+  return server
 }
 
 function createServerCloseFn(server: http.Server | null) {
